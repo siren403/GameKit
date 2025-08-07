@@ -1,0 +1,7 @@
+﻿{
+    "name": "com.aaron.game-kit",
+    "displayName": "GameKit",
+    "version": "0.1.0",
+    "description": "(Api -> Core <- Infrastructure) architecture for support kit",
+    "unity": "2021.3"
+}
