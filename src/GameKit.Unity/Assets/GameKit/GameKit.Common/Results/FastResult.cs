@@ -30,6 +30,19 @@ namespace GameKit.Common.Results
             }
         }
 
+        public Error FirstError
+        {
+            get
+            {
+                if (!IsError)
+                {
+                    throw new InvalidOperationException("Cannot access FirstError on a successful result.");
+                }
+
+                return _error1;
+            }
+        }
+
         public ReadOnlySpan<Error> GetErrors()
         {
             if (!IsError)
