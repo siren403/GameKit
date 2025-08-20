@@ -43,35 +43,17 @@ namespace GameKit.Navigation.Scenes
             _router = router;
         }
 
-        public async UniTask InitializeAsync()
+        public async UniTask InitializeAsync(CancellationToken ct = default)
         {
             if (_initialized)
             {
-                throw new InvalidOperationException("Already initialized.");
-            }
-
-            var initialized = await AddressableExtensions.Initialize();
-
-            if (!initialized.IsSuccess)
-            {
+                // throw new InvalidOperationException("Already initialized.");
                 return;
-            }
-
-            var catalogs = await AddressableExtensions.CheckForCatalogUpdates();
-            if (!catalogs.IsSuccess)
-            {
-                Debug.Log("Failed to check for catalog updates");
-                return;
-            }
-
-            foreach (var location in catalogs.Result)
-            {
-                Debug.Log(location);
             }
 
             _initialized = true;
 
-            if (_options.StartupRoot)
+            if (_options.AutoStartup)
             {
                 await StartupAsync();
 
@@ -141,7 +123,7 @@ namespace GameKit.Navigation.Scenes
             CancellationToken ct = default
         )
         {
-            if (locations is { Count: 0 })
+            if (locations is {Count: 0})
             {
                 return;
             }
@@ -196,7 +178,7 @@ namespace GameKit.Navigation.Scenes
             try
             {
                 var initialStatus = handle.GetDownloadStatus();
-                if (initialStatus is { TotalBytes: > 0 })
+                if (initialStatus is {TotalBytes: > 0})
                 {
                     progress?.Report(initialStatus);
                 }
@@ -207,7 +189,7 @@ namespace GameKit.Navigation.Scenes
                     await UniTask.Yield();
                     ThrowIfResourceException();
                     var status = handle.GetDownloadStatus();
-                    if (status is { TotalBytes: > 0 })
+                    if (status is {TotalBytes: > 0})
                     {
                         progress?.Report(status);
                     }
@@ -445,7 +427,7 @@ namespace GameKit.Navigation.Scenes
                 {
                     await UniTask.Yield();
                     var download = handle.GetDownloadStatus();
-                    if (download is { TotalBytes: > 0 })
+                    if (download is {TotalBytes: > 0})
                     {
                         Debug.Log(
                             $"Download Status: {download.DownloadedBytes}, {download.TotalBytes}, {download.Percent:p2}");

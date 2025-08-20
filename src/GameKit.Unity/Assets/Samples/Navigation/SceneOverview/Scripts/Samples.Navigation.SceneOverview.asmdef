@@ -1,24 +1,25 @@
 {
-  "name": "Samples.Navigation.SceneOverview",
-  "rootNamespace": "",
-  "references": [
-    "GameKit.Navigation",
-    "GameKit.Navigation.VContainer",
-    "VContainer",
-    "VitalRouter",
-    "UniTask",
-    "Unity.Addressables",
-    "Unity.ResourceManager",
-    "LitMotion",
-    "GameKit.SceneLauncher.VContainer"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Samples.Navigation.SceneOverview",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.Navigation",
+        "GameKit.Navigation.VContainer",
+        "VContainer",
+        "VitalRouter",
+        "UniTask",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "LitMotion",
+        "GameKit.SceneLauncher.VContainer",
+        "GameKit.Assets"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

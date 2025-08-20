@@ -1,4 +1,8 @@
-﻿using GameKit.Navigation.VContainer;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
+using GameKit.Assets;
+using GameKit.Navigation.Scenes;
+using GameKit.Navigation.VContainer;
 using GameKit.SceneLauncher.VContainer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,17 +27,25 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
             var resolver = new SceneInstallerResolver();
             resolver.Register(sampleMainScenePath, new MainScene());
-            
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/FadeScene.unity", new FadeScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/InitializeScene.unity", new InitializeScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/IntroScene.unity", new IntroScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/TransitionScene.unity", new TransitionScene());
+
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/FadeScene.unity",
+                new FadeScene());
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/InitializeScene.unity",
+                new InitializeScene());
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/IntroScene.unity",
+                new IntroScene());
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/TransitionScene.unity",
+                new TransitionScene());
             SceneScopeInitializer.Initialize(resolver);
         }
 
         public void Install(IContainerBuilder builder)
         {
-            builder.RegisterSceneNavigator(navigator => { navigator.StartupRootOnlyMainScene("/intro"); });
+            builder.RegisterSceneNavigator(navigator =>
+            {
+                // AutoStartup
+                navigator.AutoStartupFromMainScene("/intro");
+            });
             builder.RegisterVitalRouter(routing => { });
             // builder.RegisterComponentInHierarchy<FadeCanvas>();
             // builder.RegisterBuildCallback(container =>

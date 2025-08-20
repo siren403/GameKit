@@ -199,3 +199,5 @@ sysinfo.txt
 .idea/
 
 /ServerData
+
+!/Assets/**/*.unitypackage

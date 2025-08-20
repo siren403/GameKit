@@ -22,13 +22,17 @@ namespace GameKit.Navigation.VContainer
             var nav = new SceneNavigatorBuilder(builder);
             configure(nav);
 
-            builder.RegisterInstance(new NavigatorOptions()
+            var options = new NavigatorOptions()
             {
-                StartupRoot = nav.StartupRoot,
-                EntryPath = nav.EntryPath,
-            });
+                AutoStartup = nav.AutoStartup,
+                EntryPath = nav.EntryLabel,
+            };
+            builder.RegisterInstance(options);
             builder.Register<SceneNavigator>(Lifetime.Singleton).AsSelf();
-            builder.RegisterEntryPoint<SceneNavigatorInitializer>();
+            if (options.AutoStartup)
+            {
+                builder.RegisterEntryPoint<SceneNavigatorInitializer>();
+            }
         }
     }
 
@@ -36,8 +40,8 @@ namespace GameKit.Navigation.VContainer
     {
         private readonly IContainerBuilder _builder;
 
-        public bool StartupRoot = true;
-        public string EntryPath { get; set; } = string.Empty;
+        public bool AutoStartup = true;
+        public string EntryLabel { get; set; } = string.Empty;
 
         public SceneNavigatorBuilder(IContainerBuilder builder)
         {
@@ -55,35 +59,41 @@ namespace GameKit.Navigation.VContainer
         });
 #endif
 
-        public static void StartupRootOnlyMainScene(this SceneNavigatorBuilder builder, string entryPath)
+        /// <summary>
+        /// Auto startup
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="label"></param>
+        public static void AutoStartupFromMainScene(this SceneNavigatorBuilder builder, string label)
         {
-            builder.StartupRoot = SceneManager.GetSceneAt(0).buildIndex == 0;
-            builder.EntryPath = entryPath;
+            builder.AutoStartup = SceneManager.GetSceneAt(0).buildIndex == 0;
+            builder.EntryLabel = label;
         }
 
-        public static async UniTask CheckForUpdates(this SceneNavigator navigator)
-        {
-            var updates = await AddressableExtensions.CheckForCatalogUpdates();
-            if (!updates.IsSuccess)
-            {
-                return;
-            }
-
-            if (!updates.Result.Any())
-            {
-                return;
-            }
-
-            // TODO: AddressableExtensions.UpdateCatalogs
-            {
-#if !UNITY_WEBGL
-                await _readyCache;
-#endif
-                await Addressables.UpdateCatalogs(true, updates.Result);
-            }
-
-            await navigator.ClearAsync();
-            await navigator.StartupAsync();
-        }
+//         [Obsolete]
+//         public static async UniTask CheckForUpdates(this SceneNavigator navigator)
+//         {
+//             var updates = await AddressableExtensions.CheckForCatalogUpdates();
+//             if (!updates.IsSuccess)
+//             {
+//                 return;
+//             }
+//
+//             if (!updates.Result.Any())
+//             {
+//                 return;
+//             }
+//
+//             // TODO: AddressableExtensions.UpdateCatalogs
+//             {
+// #if !UNITY_WEBGL
+//                 await _readyCache;
+// #endif
+//                 await Addressables.UpdateCatalogs(true, updates.Result);
+//             }
+//
+//             await navigator.ClearAsync();
+//             await navigator.StartupAsync();
+//         }
     }
 }

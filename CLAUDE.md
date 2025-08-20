@@ -26,8 +26,9 @@ GameKit은 모듈별 개별 패키지와 메타 패키지를 제공하는 하이
   - 의존성: UniTask
 
 - **GameKit.Assets** (`com.aaron.game-kit.assets`) - Addressable 에셋 시스템 확장  
-  - Runtime: Addressables 유틸리티
-  - 의존성: Unity Addressables, UniTask
+  - Runtime: Addressables 유틸리티 및 유즈케이스 기반 도구
+  - 구조: 중앙 집중형 Manager 대신 유즈케이스별 독립적 기능 제공
+  - 의존성: Unity Addressables, UniTask, GameKit.Common
 
 - **GameKit.Navigation** (`com.aaron.game-kit.navigation`) - 씬과 화면 네비게이션 시스템
   - Runtime: 핵심 네비게이션 기능
@@ -273,3 +274,26 @@ Unity Package Manager가 다음을 자동으로 해결합니다:
 - GameKit 모듈 간 의존성
 - 외부 라이브러리 의존성 (UniTask, VContainer 등)
 - 버전 호환성 관리
+
+## Assets 모듈 아키텍처
+
+GameKit.Assets는 중앙 집중형 Manager 패턴 대신 유즈케이스 기반 도구 집합을 제공합니다:
+
+### 핵심 컴포넌트
+- **AddressableExtensions**: 기본 확장 메서드 (`CaptureWithRelease` 등)
+- **AddressableOperations**: Addressable 래퍼 함수 집합 (인스턴스 기반)
+- **CatalogResult**: `FastResult<AsyncHandleSnapshot<List<string>>>`의 전용 래퍼 타입
+- **CatalogErrorCodes**: 구조화된 에러 코드 상수
+
+### 설계 원칙
+- **보완적 기능**: Addressable 직접 조작과 충돌하지 않는 선택적 도구
+- **유즈케이스 중심**: 번들 크기 체크, 다운로드 관리 등 독립적 기능
+- **타입 안전성**: 긴 제네릭 타입을 간단한 전용 타입으로 래핑
+- **DI 통합**: VContainer를 통한 인스턴스 기반 관리
+
+### 향후 확장 계획
+```csharp
+AssetDownloader      // 다운로드 상태 추적 및 진행률 관리
+AssetCacheManager    // 캐시 크기 조회 및 정리
+BundleAnalyzer       // 번들 정보 분석 및 의존성 추적
+```
