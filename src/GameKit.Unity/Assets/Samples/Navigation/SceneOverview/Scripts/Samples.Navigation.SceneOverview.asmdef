@@ -1,0 +1,23 @@
+{
+  "name": "Samples.Navigation.SceneOverview",
+  "rootNamespace": "",
+  "references": [
+    "GameKit.Navigation",
+    "GameKit.Navigation.VContainer",
+    "VContainer",
+    "VitalRouter",
+    "UniTask",
+    "Unity.Addressables",
+    "Unity.ResourceManager",
+    "LitMotion"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

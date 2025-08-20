@@ -1,0 +1,14 @@
+﻿{
+  "name": "com.aaron.game-kit.game-sessions.vcontainer",
+  "displayName": "GameKit.GameSessions.VContainer",
+  "version": "0.1.0",
+  "description": "VContainer integration for GameSessions system",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.aaron.game-kit.game-sessions.core": "0.1.0",
+    "com.aaron.game-kit.common": "0.1.0",
+    "jp.hadashikick.vcontainer": "1.17.0",
+    "com.aaron.vitalmediator": "1.0.0",
+    "com.cysharp.unitask": "2.5.10"
+  }
+}

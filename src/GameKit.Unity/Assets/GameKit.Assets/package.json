@@ -1,0 +1,11 @@
+﻿{
+  "name": "com.aaron.game-kit.assets",
+  "displayName": "GameKit.Assets",
+  "version": "0.1.0",
+  "description": "Assets Utilities",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.unity.addressables": "2.6.0",
+    "com.cysharp.unitask": "2.5.10"
+  }
+}

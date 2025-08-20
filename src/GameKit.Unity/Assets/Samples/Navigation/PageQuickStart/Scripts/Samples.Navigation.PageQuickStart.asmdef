@@ -1,0 +1,22 @@
+{
+    "name": "Samples.Navigation.PageQuickStart",
+    "rootNamespace": "",
+    "references": [
+        "VContainer",
+        "VitalRouter",
+        "UniTask",
+        "LitMotion",
+        "LitMotion.Animation",
+        "GameKit.Navigation",
+        "GameKit.Navigation.VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

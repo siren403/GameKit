@@ -1,0 +1,14 @@
+﻿{
+  "name": "com.aaron.game-kit.navigation",
+  "displayName": "GameKit.Navigation",
+  "version": "0.1.0",
+  "description": "Navigation systems (Scene, UGUI)",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.aaron.game-kit.common": "0.1.0",
+    "com.aaron.game-kit.assets": "0.1.0",
+    "com.unity.addressables": "2.6.0",
+    "com.cysharp.unitask": "2.5.10",
+    "jp.hadashikick.vitalrouter": "1.7.0"
+  }
+}

@@ -1,0 +1,16 @@
+﻿{
+  "name": "com.aaron.game-kit",
+  "displayName": "GameKit",
+  "version": "0.1.0",
+  "description": "A collection of tools and utilities for game development in Unity.",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.aaron.game-kit.common": "0.1.0",
+    "com.aaron.game-kit.assets": "0.1.0",
+    "com.aaron.game-kit.navigation": "0.1.0",
+    "com.aaron.game-kit.scene-launcher": "0.1.0",
+    "com.aaron.game-kit.game-sessions": "0.1.0",
+    "com.aaron.game-kit.navigation.vcontainer": "0.1.0",
+    "com.aaron.game-kit.scene-launcher.vcontainer": "0.1.0"
+  }
+}

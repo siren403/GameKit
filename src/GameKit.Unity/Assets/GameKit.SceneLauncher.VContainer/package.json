@@ -1,0 +1,12 @@
+﻿{
+  "name": "com.aaron.game-kit.scene-launcher.vcontainer",
+  "displayName": "GameKit.SceneLauncher.VContainer",
+  "version": "0.1.0",
+  "description": "Scene lifecycle utility with VContainer integration",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.aaron.game-kit.scene-launcher": "0.1.0",
+    "jp.hadashikick.vcontainer": "1.17.0",
+    "com.cysharp.unitask": "2.5.10"
+  }
+}
