@@ -1,0 +1,26 @@
+{
+    "name": "GameKit.SceneLauncher.VContainer",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.SceneLauncher",
+        "UniTask",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "USE_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "USE_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+    "name": "GameKit.Mediator.Abstractions",
+    "rootNamespace": "",
+    "references": [
+        "UniTask",
+        "VitalRouter"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

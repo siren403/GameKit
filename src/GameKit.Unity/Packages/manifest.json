@@ -1,7 +1,5 @@
 {
   "dependencies": {
-    "com.aaron.vitalmediator": "file:../../VitalMediator/src/VitalMediator.Unity/Assets/VitalMediator",
-    "com.aaron.vitalmediator.abstractions": "file:../../VitalMediator/src/VitalMediator.Unity/Assets/VitalMediator.Abstractions",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.10",
     "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity#v4.5.0",
     "com.annulusgames.lit-motion": "https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotion#v2.0.1",

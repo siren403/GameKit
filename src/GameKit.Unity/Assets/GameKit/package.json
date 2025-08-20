@@ -10,7 +10,6 @@
     "com.aaron.game-kit.navigation": "0.1.0",
     "com.aaron.game-kit.scene-launcher": "0.1.0",
     "com.aaron.game-kit.game-sessions": "0.1.0",
-    "com.aaron.game-kit.navigation.vcontainer": "0.1.0",
-    "com.aaron.game-kit.scene-launcher.vcontainer": "0.1.0"
+    "com.aaron.game-kit.mediator": "0.1.0"
   }
 }

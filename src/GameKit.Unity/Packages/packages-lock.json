@@ -1,17 +1,5 @@
 {
   "dependencies": {
-    "com.aaron.vitalmediator": {
-      "version": "file:../../VitalMediator/src/VitalMediator.Unity/Assets/VitalMediator",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
-    "com.aaron.vitalmediator.abstractions": {
-      "version": "file:../../VitalMediator/src/VitalMediator.Unity/Assets/VitalMediator.Abstractions",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.annulusgames.lit-motion": {
       "version": "https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotion#v2.0.1",
       "depth": 0,

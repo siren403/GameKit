@@ -3,9 +3,5 @@
   "displayName": "GameKit.GameSessions",
   "version": "0.1.0",
   "description": "Game session state management - includes Core and VContainer integration",
-  "unity": "6000.0",
-  "dependencies": {
-    "com.aaron.game-kit.game-sessions.core": "0.1.0",
-    "com.aaron.game-kit.game-sessions.vcontainer": "0.1.0"
-  }
+  "unity": "6000.0"
 }

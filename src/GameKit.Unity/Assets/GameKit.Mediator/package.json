@@ -1,0 +1,12 @@
+{
+  "name": "com.aaron.game-kit.mediator",
+  "version": "0.1.0",
+  "displayName": "GameKit.Mediator",
+  "description": "A simple mediator pattern implementation for Unity, allowing for decoupled communication between components.",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.aaron.game-kit.mediator.abstractions": "0.1.0",
+    "com.cysharp.unitask": "2.5.10",
+    "jp.hadashikick.vitalrouter": "1.7.0"
+  }
+}

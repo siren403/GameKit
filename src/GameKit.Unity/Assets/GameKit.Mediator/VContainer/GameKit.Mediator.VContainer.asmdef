@@ -1,0 +1,27 @@
+{
+    "name": "GameKit.Mediator.VContainer",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.Mediator.Abstractions",
+        "GameKit.Mediator",
+        "VContainer",
+        "VitalRouter"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "USE_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "USE_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

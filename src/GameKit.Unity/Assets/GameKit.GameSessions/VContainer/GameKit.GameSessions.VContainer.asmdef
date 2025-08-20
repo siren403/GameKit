@@ -1,0 +1,33 @@
+{
+    "name": "GameKit.GameSessions.VContainer",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.GameSessions.Core",
+        "VContainer",
+        "GameKit.Mediator",
+        "GameKit.Common",
+        "GameKit.Mediator.Abstractions",
+        "GameKit.Mediator.VContainer",
+        "VitalRouter",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Ulid.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "USE_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "USE_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

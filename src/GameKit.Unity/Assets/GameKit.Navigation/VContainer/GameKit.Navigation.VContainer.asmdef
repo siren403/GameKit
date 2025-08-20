@@ -1,0 +1,35 @@
+{
+    "name": "GameKit.Navigation.VContainer",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.Navigation",
+        "VContainer",
+        "VitalRouter",
+        "UniTask",
+        "GameKit.Assets",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "USE_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.zlogger",
+            "expression": "",
+            "define": "USE_ZLOGGER"
+        },
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "USE_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

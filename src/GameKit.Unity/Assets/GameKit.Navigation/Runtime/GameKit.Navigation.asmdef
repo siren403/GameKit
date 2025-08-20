@@ -1,0 +1,27 @@
+{
+  "name": "GameKit.Navigation",
+  "rootNamespace": "",
+  "references": [
+    "GameKit.Common",
+    "GameKit.Assets",
+    "Unity.Addressables",
+    "Unity.ResourceManager",
+    "UniTask",
+    "VitalRouter"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.cysharp.zlogger",
+      "expression": "",
+      "define": "USE_ZLOGGER"
+    }
+  ],
+  "noEngineReferences": false
+}
