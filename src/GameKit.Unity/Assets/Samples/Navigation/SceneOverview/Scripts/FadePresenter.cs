@@ -1,25 +1,10 @@
 using Cysharp.Threading.Tasks;
 using GameKit.Navigation.Scenes.Commands;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 using VitalRouter;
-using VitalRouter.VContainer;
 
 namespace Samples.Navigation.SceneOverview
 {
-    public class FadeSceneLifetimeScope : LifetimeScope
-    {
-        protected override void Configure(IContainerBuilder builder)
-        {
-            builder.RegisterComponentInHierarchy<FadeCanvas>();
-            builder.RegisterVitalRouter(routing =>
-            {
-                routing.Map<FadePresenter>();
-            });
-        }
-    }
-
     [Routes(CommandOrdering.Drop)]
     public partial class FadePresenter
     {

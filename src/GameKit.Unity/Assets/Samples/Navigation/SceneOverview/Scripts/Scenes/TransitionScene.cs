@@ -1,13 +1,13 @@
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 using VContainer;
 using VContainer.Unity;
 using VitalRouter.VContainer;
 
-namespace Samples.Navigation.SceneOverview
+namespace Samples.Navigation.SceneOverview.Scenes
 {
-    public class TransitionSceneLifetimeScope : LifetimeScope
+    public class TransitionScene : IInstaller
     {
-        protected override void Configure(IContainerBuilder builder)
+        public void Install(IContainerBuilder builder)
         {
             builder.RegisterComponentInHierarchy<Image>();
             builder.RegisterVitalRouter(routing =>

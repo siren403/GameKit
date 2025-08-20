@@ -9,7 +9,8 @@
     "UniTask",
     "Unity.Addressables",
     "Unity.ResourceManager",
-    "LitMotion"
+    "LitMotion",
+    "GameKit.SceneLauncher.VContainer"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
