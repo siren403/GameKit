@@ -26,5 +26,12 @@ namespace GameKit.Assets
 
         public static implicit operator CatalogResult(Error error)
             => new(FastResult<CatalogSnapshot>.Fail(error));
+
+        public override string ToString()
+        {
+            return _result.ToString();
+        }
+        
+        public FastResult<CatalogSnapshot> Result => _result;
     }
 }

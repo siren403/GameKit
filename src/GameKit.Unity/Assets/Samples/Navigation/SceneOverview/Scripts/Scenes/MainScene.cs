@@ -1,4 +1,5 @@
 ﻿using GameKit.Navigation.Scenes;
+using GameKit.Navigation.Scenes.Extensions;
 using GameKit.Navigation.VContainer;
 using GameKit.SceneLauncher.VContainer;
 using UnityEngine;

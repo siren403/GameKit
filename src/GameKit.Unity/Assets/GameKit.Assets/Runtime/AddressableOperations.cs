@@ -33,22 +33,22 @@ namespace GameKit.Assets
             }
 
             var ex = snapshot.OperationException;
-            var error = ex.Message switch
+            var error = ex.ToString() switch
             {
-                { } msg when msg.Contains("RemoteProviderException") => new Error()
-                {
-                    Code = CatalogErrorCodes.RemoteError,
-                    Description = ex.Message
-                },
                 { } msg when msg.Contains("ConnectionError") => new Error()
                 {
                     Code = CatalogErrorCodes.ConnectionError,
-                    Description = ex.Message
+                    Description = msg
                 },
-                _ => new Error()
+                { } msg when msg.Contains("RemoteProviderException") => new Error()
+                {
+                    Code = CatalogErrorCodes.RemoteError,
+                    Description = msg
+                },
+                { } msg => new Error()
                 {
                     Code = CatalogErrorCodes.UnknownError,
-                    Description = ex.Message
+                    Description = msg
                 },
             };
             return error;
@@ -86,7 +86,7 @@ namespace GameKit.Assets
             }
 
             var locations = locationsResult.Value;
-            if (locations is { Count: 0 })
+            if (locations is {Count: 0})
             {
                 return FastResult<(ByteSize, IList<IResourceLocation>)>.Fail("Download.EmptyLocations");
             }
@@ -108,7 +108,7 @@ namespace GameKit.Assets
             IProgress<DownloadStatus> progress = null
         )
         {
-            if (locations is { Count: 0 })
+            if (locations is {Count: 0})
             {
                 return FastResult<Void>.Fail("Download.EmptyLocations");
             }

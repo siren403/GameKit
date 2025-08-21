@@ -6,6 +6,8 @@ using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Common.Results;
 using GameKit.Navigation.Scenes;
+using GameKit.Navigation.Scenes.Commands;
+using GameKit.Navigation.Scenes.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -43,6 +45,22 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
         private async UniTaskVoid ManualToSceneAsync(string label, CancellationToken ct)
         {
+            // {
+            //     var plan = await new ToScenePlanBuilder(label)
+            //         .CheckCatalog()
+            //         .GetDownloadSize(new { }, static async (state, ct) =>
+            //         {
+            //             return FastResult.Ok;
+            //         })
+            //         .AppendTransition()
+            //         .DownloadLocations(new { }, static async (state, ct) =>
+            //         {
+            //             return FastResult.Ok;
+            //         })
+            //         .BuildAsync(ct);
+            //     Debug.Log(plan);
+            // }
+
             // Addressable로 ToScene에 필요한 흐름제어 구성 후
             // ToScenePlan을 사용하여 씬 전환을 구현
             // 추후 ToScenePlanBuilder를 통해 흐름제어와 ToScene 연동
@@ -51,7 +69,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
             List<IResourceLocation> downloadLocations = new List<IResourceLocation>();
 
             // Check catalog
-            if (false)
+            if (true)
             {
                 var catalogResult = await AddressableOperations.CheckCatalog(ct);
                 if (catalogResult.IsError)
@@ -132,7 +150,8 @@ namespace Samples.Navigation.SceneOverview.Scenes
             var isDownloaded = false;
             // Download
             {
-                var downloadResult = await AddressableOperations.DownloadLocationsAsync(downloadLocations, ct, this);
+                var downloadResult =
+                    await AddressableOperations.DownloadLocationsAsync(downloadLocations, ct, this);
                 if (downloadResult.IsError)
                 {
                     Debug.LogError($"Failed to download locations for '{label}': {downloadResult}");
