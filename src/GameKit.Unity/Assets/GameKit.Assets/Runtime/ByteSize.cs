@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameKit.Navigation.Scenes
+namespace GameKit.Assets
 {
     public readonly struct ByteSize
     {

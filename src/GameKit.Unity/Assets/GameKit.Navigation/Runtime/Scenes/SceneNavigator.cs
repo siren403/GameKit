@@ -5,374 +5,336 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
+using GameKit.Assets.Extensions;
+using GameKit.Common.Results;
 using GameKit.Navigation.Scenes.Commands;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Assertions;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
-using UnityEngine.ResourceManagement;
-using UnityEngine.ResourceManagement.Exceptions;
 using VitalRouter;
+using Void = GameKit.Common.Results.Void;
 
 namespace GameKit.Navigation.Scenes
 {
-    public class SceneNavigator
+    public readonly struct ToScenePlanCommand : ICommand
+    {
+        public readonly string Label;
+        public readonly IList<IResourceLocation> Locations;
+        public ByteSize DownloadSize { get; init; }
+        public bool IsDownloaded { get; init; }
+        public int? TransitionIndex { get; init; }
+
+        public IResourceLocation TransitionLocation =>
+            TransitionIndex.HasValue ? Locations[TransitionIndex.Value] : null;
+
+        public ToScenePlanCommand(
+            string label,
+            IList<IResourceLocation> locations
+        )
+        {
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                throw new ArgumentException("Label cannot be null or whitespace.", nameof(label));
+            }
+
+            if (locations is { Count: 0 })
+            {
+                throw new ArgumentException("Locations cannot be empty.", nameof(locations));
+            }
+
+            Label = label;
+            Locations = locations;
+            DownloadSize = 0;
+            IsDownloaded = false;
+            TransitionIndex = null;
+        }
+
+        public void Deconstruct(
+            out string label,
+            out IList<IResourceLocation> locations,
+            out bool isDownloaded,
+            out IResourceLocation transitionLocation
+        )
+        {
+            label = Label;
+            locations = Locations;
+            isDownloaded = IsDownloaded;
+            transitionLocation = TransitionLocation;
+        }
+    }
+
+    public readonly struct ToSceneCommand : ICommand
+    {
+        public string Label { get; init; }
+    }
+
+    public static class RouterExtensions
+    {
+        public static void ToScene(this Router router, string label)
+        {
+            if (router == null)
+            {
+                throw new ArgumentNullException(nameof(router));
+            }
+
+            if (string.IsNullOrEmpty(label))
+            {
+                throw new ArgumentException("Label cannot be null or empty.", nameof(label));
+            }
+
+            router.PublishAsync(new ToSceneCommand { Label = label });
+        }
+    }
+
+    [Routes(CommandOrdering.Drop)]
+    internal partial class SceneNavigator
     {
         private readonly NavigatorOptions _options;
         private readonly Router _router;
-        private readonly Stack<string> _history = new();
-        private readonly Dictionary<string, IList<IResourceLocation>> _locationCache = new();
         private readonly HashSet<string> _loadedScenesCache = new();
-        private readonly List<AsyncOperationHandle<SceneInstance>> _loadingSceneHandles = new();
+        private readonly List<AsyncOperationHandle<SceneInstance>> _loadedSceneHandleCache = new();
 
-        private bool _initialized;
-        public bool IsInitialized => _initialized;
-
-        public string LoadedLocation { get; private set; } = string.Empty;
-
-        public bool HasHistory => _history.Count > 1;
+        public string LoadedLocation { get; private set; }
+        private Queue<IResourceLocation> _loadedLocations = new();
 
         public SceneNavigator(NavigatorOptions options, Router router)
         {
             _options = options;
             _router = router;
+            LoadedLocation = _options.Root;
         }
 
-        public async UniTask InitializeAsync(CancellationToken ct = default)
-        {
-            if (_initialized)
-            {
-                // throw new InvalidOperationException("Already initialized.");
-                return;
-            }
-
-            _initialized = true;
-
-            if (_options.AutoStartup)
-            {
-                await StartupAsync();
-
-                if (!string.IsNullOrEmpty(_options.EntryPath))
-                {
-                    await ToAsync(_options.EntryPath);
-                }
-            }
-        }
-
-        public async UniTask StartupAsync()
-        {
-            await ToAsync(_options.Root);
-        }
-
-        public readonly struct ToHandle
-        {
-            private readonly SceneNavigator _navigator;
-            private readonly string _path;
-
-            public ToHandle(SceneNavigator navigator, string path)
-            {
-                _navigator = navigator;
-                _path = path;
-            }
-
-            public async UniTask<(int count, long bytes)> GetDownloadInfoAsync()
-            {
-                IList<IResourceLocation> locations = await _navigator.GetLocationsAsync(_path);
-                if (locations.Count == 0)
-                {
-                    return default;
-                }
-
-                var size = await Addressables.GetDownloadSizeAsync(locations).Task.AsUniTask();
-                return (locations.Count, size);
-            }
-
-            public async UniTask DownloadAsync(IProgress<DownloadStatus> progress = null)
-            {
-                IList<IResourceLocation> locations = await _navigator.GetLocationsAsync(_path);
-                await _navigator.DownloadAsync(locations, progress);
-            }
-
-            public void Execute(IProgress<LoadingStatus> progress = null)
-            {
-                _navigator.ToAsync(_path, loadingProgress: progress).Forget();
-            }
-
-            public override string ToString()
-            {
-                return $"ToHandle: {_path}";
-            }
-        }
-
-        public ToHandle To(string path)
-        {
-            return new ToHandle(this, path);
-        }
-
-        private static readonly Queue<RemoteProviderException> RemoteExceptions = new();
-        private static readonly Queue<OperationException> OperationExceptions = new();
-
-        private async UniTask DownloadAsync(
+        private async UniTask<FastResult<Void>> DownloadAsync(
             IList<IResourceLocation> locations,
             IProgress<DownloadStatus> progress = null,
             CancellationToken ct = default
         )
         {
-            if (locations is {Count: 0})
+            if (locations is { Count: 0 })
             {
-                return;
+                return FastResult<Void>.Fail("Download.EmptyLocations");
             }
 
-            #region Error Handling
+            var handle = Addressables.DownloadDependenciesAsync(locations, autoReleaseHandle: true);
+            var result = await handle.OrError(progress);
+            return result.IsError(out FastResult<Void> fail) ? fail : FastResult.Ok;
+        }
 
-            ResourceManager.ExceptionHandler += OnExceptionHandler;
-
-            void OnExceptionHandler(AsyncOperationHandle exceptionHandle, Exception exception)
+        private readonly struct TransitionScope : IAsyncDisposable
+        {
+            public static async UniTask CreateAsync(string label, CancellationToken ct = default)
             {
-                switch (exception)
-                {
-                    case RemoteProviderException remote:
-                        RemoteExceptions.Enqueue(remote);
-                        break;
-                    case OperationException operation:
-                        OperationExceptions.Enqueue(operation);
-                        break;
-                }
-
-                Debug.LogError(
-                    $"{exceptionHandle.DebugName} | {exceptionHandle.OperationException} | {exception.Message}");
             }
 
-            void ThrowIfResourceException()
+            public async ValueTask DisposeAsync()
             {
-                try
-                {
-                    if (OperationExceptions.Any())
-                    {
-                        throw OperationExceptions.Dequeue();
-                    }
-
-                    // WebRequest 예외로 발생한 RemoteProviderException 리트라이 처리까지 포함해서
-                    // 반복적으로 발생할 수 있음.
-                    // if (RemoteExceptions.Any())
-                    // {
-                    //     throw LoadSceneException.CreateRemoteError(RemoteExceptions.Dequeue());
-                    // }
-                }
-                finally
-                {
-                    OperationExceptions.Clear();
-                    RemoteExceptions.Clear();
-                }
-            }
-
-            #endregion
-
-
-            var handle = Addressables.DownloadDependenciesAsync(locations);
-            try
-            {
-                var initialStatus = handle.GetDownloadStatus();
-                if (initialStatus is {TotalBytes: > 0})
-                {
-                    progress?.Report(initialStatus);
-                }
-
-                Debug.Log($"Download status: {initialStatus}");
-                while (!handle.IsDone && !ct.IsCancellationRequested)
-                {
-                    await UniTask.Yield();
-                    ThrowIfResourceException();
-                    var status = handle.GetDownloadStatus();
-                    if (status is {TotalBytes: > 0})
-                    {
-                        progress?.Report(status);
-                    }
-                }
-
-                Debug.Log($"Download completed: {handle}");
-            }
-            finally
-            {
-                handle.Release();
-                ResourceManager.ExceptionHandler -= OnExceptionHandler;
             }
         }
 
-        public async UniTask ToAsync(
-            string path,
-            IProgress<DownloadStatus> downloadProgress = null,
-            IProgress<LoadingStatus> loadingProgress = null
-        )
+        [Route]
+        private async UniTask On(ToScenePlanCommand command, PublishContext context)
         {
-            Assert.IsTrue(_initialized);
-
-            (string path, SceneInstance instance)? transitionScene = null;
-            if (path != _options.Root)
+            var (label, locations, downloaded, transitionLocation) = command;
+            var ct = context.CancellationToken;
+            await _router.PublishAsync(new NavigationStartedCommand()
             {
-                if (path != _options.EntryPath)
-                {
-                    await _router.PublishAsync(new NavigationStartedCommand()
-                    {
-                        Path = path
-                    });
-                }
+                Label = label
+            }, ct);
 
-                var transitionPath = $"{path}:transition";
-                var transitions = await GetLocationsAsync(transitionPath);
-                if (transitions.Count == 0)
+            if (!downloaded)
+            {
+                var downloadResult = await AddressableOperations.DownloadLocationsAsync(locations, ct);
+                if (downloadResult.IsError)
                 {
-                    transitions = await GetLocationsAsync($"{_options.Root}:transition");
-                }
-
-                if (transitions.Count > 0)
-                {
-                    var transition = transitions.First();
-                    var handle = LoadSceneAsync(transition);
-                    await handle.Task.AsUniTask();
-                    await handle.Result.ActivateAsync();
-                    transitionScene = (transitionPath, handle.Result);
-                    // TODO: TransitionStartedCommand
-                    await _router.PublishAsync(new TransitionStartedCommand()
-                    {
-                        Path = transitionPath
-                    });
+                    // TODO: SceneErrorCommand
+                    return;
                 }
             }
 
+            SceneInstance? transition = null;
 
-            IList<IResourceLocation> locations = await GetLocationsAsync(path);
-
-            if (locations.Count == 0)
+            if (transitionLocation != null)
             {
-                LoadedLocation = path;
-                return;
-            }
-
-            ByteSize size = await Addressables.GetDownloadSizeAsync(locations).Task.AsUniTask();
-            Debug.Log($"Size of locations for path '{path}': {size} bytes");
-            if (size > 0)
-            {
-                await DownloadAsync(locations, downloadProgress);
-            }
-
-            if (!string.IsNullOrEmpty(LoadedLocation))
-            {
-                if (LoadedLocation != _options.Root)
+                var handle = Addressables.LoadSceneAsync(
+                    transitionLocation,
+                    LoadSceneMode.Additive,
+                    SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
+                    false
+                );
+                await handle.Task.AsUniTask();
+                await handle.Result.ActivateAsync();
+                transition = handle.Result;
+                await _router.PublishAsync(new TransitionStartedCommand()
                 {
-                    await UnloadRouteAsync(LoadedLocation);
-                    LoadedLocation = string.Empty;
-                }
-            }
-            else
-            {
-                for (var i = 0; i < SceneManager.loadedSceneCount; ++i)
-                {
-                    var unmanagedScene = SceneManager.GetSceneAt(i);
-                    if (unmanagedScene.buildIndex == 0)
-                    {
-                        continue;
-                    }
-
-                    await SceneManager.UnloadSceneAsync(unmanagedScene);
-                }
+                    Label = label
+                }, ct);
             }
 
-            await LoadRouteAsync(path, loadingProgress);
-            LoadedLocation = path;
 
-            // TODO: TransitionEndedCommand
-            if (transitionScene.HasValue)
+            if (LoadedLocation != _options.Root)
             {
-                var (transitionPath, instance) = transitionScene.Value;
+                await UnloadAsync();
+                LoadedLocation = string.Empty;
+            }
+
+            await LoadAsync();
+            LoadedLocation = label;
+
+            if (transition.HasValue)
+            {
                 await _router.PublishAsync(new TransitionEndedCommand()
                 {
-                    Path = transitionPath
-                });
-                await SceneManager.UnloadSceneAsync(instance.Scene);
-                transitionScene = null;
+                    Label = label
+                }, ct);
+                await SceneManager.UnloadSceneAsync(transition.Value.Scene);
+                transition = null;
             }
 
             await _router.PublishAsync(new NavigationEndedCommand()
             {
-                Path = path
+                Label = label
+            }, ct);
+
+            return;
+
+            async UniTask UnloadAsync()
+            {
+                GetLoadedScenes(_loadedScenesCache);
+
+                while (_loadedLocations.TryDequeue(out var location))
+                {
+                    string locationString = location.ToString();
+                    if (!_loadedScenesCache.Contains(locationString))
+                    {
+                        continue;
+                    }
+
+                    var operation = SceneManager.UnloadSceneAsync(locationString);
+                    if (operation == null)
+                    {
+                        continue;
+                    }
+
+                    await operation;
+                }
+            }
+
+            async UniTask LoadAsync()
+            {
+                GetLoadedScenes(_loadedScenesCache);
+                _loadedSceneHandleCache.Clear();
+                foreach (IResourceLocation location in locations
+                             .Where(location => transitionLocation != location)
+                             .Where(location => location.ResourceType == typeof(SceneInstance)))
+                {
+                    string locationString = location.ToString();
+                    if (_loadedScenesCache.Contains(locationString))
+                    {
+                        continue;
+                    }
+
+                    AsyncOperationHandle<SceneInstance> handle = Addressables.LoadSceneAsync(
+                        location,
+                        LoadSceneMode.Additive,
+                        SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
+                        false
+                    );
+
+                    var loadSceneResult = await handle.OrError();
+                    if (loadSceneResult.IsError)
+                    {
+                        // TODO: SceneErrorCommand, Restore previous state
+                        Debug.LogError($"Failed to load scene '{locationString}': {loadSceneResult}");
+                        break;
+                    }
+
+                    _loadedSceneHandleCache.Add(handle);
+                    _loadedLocations.Enqueue(location);
+                }
+
+                foreach (AsyncOperationHandle<SceneInstance> handle in _loadedSceneHandleCache)
+                {
+                    await handle.Result.ActivateAsync();
+                }
+
+                _loadedSceneHandleCache.Clear();
+            }
+        }
+
+        /// <summary>
+        /// MainScene에서 시작했을때 다른씬 언로드에 사용
+        /// </summary>
+        [Obsolete]
+        private async UniTask UnloadUnmanagedScenes()
+        {
+            for (var i = 0; i < SceneManager.loadedSceneCount; ++i)
+            {
+                var unmanagedScene = SceneManager.GetSceneAt(i);
+                if (unmanagedScene.buildIndex == 0)
+                {
+                    continue;
+                }
+
+                await SceneManager.UnloadSceneAsync(unmanagedScene);
+            }
+        }
+
+        [Route]
+        private async UniTask On(ToSceneCommand command, PublishContext context)
+        {
+            var label = command.Label;
+            await _router.PublishAsync(new NavigationStartedCommand()
+            {
+                Label = label
             });
-        }
 
-        public async UniTask PushAsync(string path)
-        {
-            Assert.IsTrue(_initialized);
-            await ToAsync(path);
-            _history.Push(path);
-        }
 
-        public async UniTask BackAsync()
-        {
-            if (!HasHistory)
-            {
-                return;
-            }
-
-            string top = _history.Pop()!;
-            await UnloadRouteAsync(top);
-
-            string peeked = _history.Peek()!;
-            if (peeked == _options.Root)
-            {
-                return;
-            }
-
-            await LoadRouteAsync(peeked);
-            LoadedLocation = peeked;
-        }
-
-        public async UniTask ClearAsync()
-        {
-            if (_history.Count == 0)
-            {
-                return;
-            }
-
-            string top = _history.Pop()!;
-            await UnloadRouteAsync(top);
-
-            _history.Clear();
-            _locationCache.Clear();
-            _loadedScenesCache.Clear();
-            _loadingSceneHandles.Clear();
-        }
-
-        private async UniTask<IList<IResourceLocation>> GetLocationsAsync(string path)
-        {
-            if (!_locationCache.TryGetValue(path, out var locations))
-            {
-                locations = await Addressables.LoadResourceLocationsAsync(path).Task;
-                locations = locations
-                    .Where(loc => loc.ResourceType == typeof(SceneInstance))
-                    .ToArray();
-                _locationCache.Add(path, locations);
-            }
-
-            return locations;
-        }
-
-        private async UniTask UnloadRouteAsync(string path)
-        {
-            var locations = await GetLocationsAsync(path);
+            IList<IResourceLocation> locations = await Addressables.LoadResourceLocationsAsync(label).Task.AsUniTask();
 
             if (locations.Count == 0)
             {
+                LoadedLocation = label;
                 return;
             }
 
+            ByteSize size = await Addressables.GetDownloadSizeAsync(locations).Task.AsUniTask();
+            Debug.Log($"Size of locations for path '{label}': {size} bytes");
+            if (size > 0)
+            {
+                var result = await DownloadAsync(locations);
+                if (result.IsError)
+                {
+                    Debug.LogError($"Failed to load location '{label}': {result}");
+                    return;
+                }
+            }
+
+            if (LoadedLocation != _options.Root)
+            {
+                await UnloadRouteAsync();
+                LoadedLocation = string.Empty;
+            }
+
+            await LoadRouteAsync(locations);
+            LoadedLocation = label;
+
+            await _router.PublishAsync(new NavigationEndedCommand()
+            {
+                Label = label
+            });
+        }
+
+        private async UniTask UnloadRouteAsync()
+        {
             GetLoadedScenes(_loadedScenesCache);
 
-            foreach (var location in locations)
+            while (_loadedLocations.TryDequeue(out var location))
             {
                 string locationString = location.ToString();
                 if (!_loadedScenesCache.Contains(locationString))
@@ -390,10 +352,8 @@ namespace GameKit.Navigation.Scenes
             }
         }
 
-        private async UniTask LoadRouteAsync(string path, IProgress<LoadingStatus> progress = null)
+        private async UniTask LoadRouteAsync(IList<IResourceLocation> locations)
         {
-            var locations = await GetLocationsAsync(path);
-
             if (locations.Count == 0)
             {
                 return;
@@ -401,12 +361,10 @@ namespace GameKit.Navigation.Scenes
 
             GetLoadedScenes(_loadedScenesCache);
 
-            _loadingSceneHandles.Clear();
+            _loadedSceneHandleCache.Clear();
 
-            var status = new LoadingStatus(
-                locations.Count(location => !_loadedScenesCache.Contains(location.ToString()))
-            );
-            foreach (IResourceLocation location in locations)
+            foreach (IResourceLocation location in locations
+                         .Where(location => location.ResourceType == typeof(SceneInstance)))
             {
                 string locationString = location.ToString();
                 if (_loadedScenesCache.Contains(locationString))
@@ -414,55 +372,23 @@ namespace GameKit.Navigation.Scenes
                     continue;
                 }
 
-                AsyncOperationHandle<SceneInstance> handle = LoadSceneAsync(location);
+                AsyncOperationHandle<SceneInstance> handle = Addressables.LoadSceneAsync(location,
+                    LoadSceneMode.Additive,
+                    SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
+                    false
+                );
+                await handle.Task;
 
-                if (!handle.IsValid())
-                {
-                    continue;
-                }
-
-                progress?.Report(status);
-
-                while (!handle.IsDone)
-                {
-                    await UniTask.Yield();
-                    var download = handle.GetDownloadStatus();
-                    if (download is {TotalBytes: > 0})
-                    {
-                        Debug.Log(
-                            $"Download Status: {download.DownloadedBytes}, {download.TotalBytes}, {download.Percent:p2}");
-                    }
-
-                    status = status.WithCurrentProgress(handle.PercentComplete);
-                    progress?.Report(status);
-                }
-
-                _loadingSceneHandles.Add(handle);
-                status = status.WithLoadedCount(status.LoadedCount + 1);
-                progress?.Report(status);
+                _loadedSceneHandleCache.Add(handle);
+                _loadedLocations.Enqueue(location);
             }
 
-            if (_loadingSceneHandles.Count == 0)
-            {
-                return;
-            }
-
-            foreach (AsyncOperationHandle<SceneInstance> handle in _loadingSceneHandles)
+            foreach (AsyncOperationHandle<SceneInstance> handle in _loadedSceneHandleCache)
             {
                 await handle.Result.ActivateAsync();
             }
 
-            _loadingSceneHandles.Clear();
-            LoadedLocation = path;
-        }
-
-        private AsyncOperationHandle<SceneInstance> LoadSceneAsync(IResourceLocation location)
-        {
-            return Addressables.LoadSceneAsync(location,
-                LoadSceneMode.Additive,
-                SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
-                false
-            );
+            _loadedSceneHandleCache.Clear();
         }
 
         private void GetLoadedScenes(in HashSet<string> cache)

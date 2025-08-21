@@ -15,7 +15,7 @@ namespace GameKit.Assets
         }
 
         public bool IsError => _result.IsError;
-        public AsyncHandleSnapshot<List<string>> Value => _result.Value;
+        public List<string> Value => _result.Value.Result;
         public Error FirstError => _result.FirstError;
 
         public static implicit operator FastResult<CatalogSnapshot>(CatalogResult result)

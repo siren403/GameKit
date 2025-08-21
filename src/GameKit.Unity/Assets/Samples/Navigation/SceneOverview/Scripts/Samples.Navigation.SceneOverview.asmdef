@@ -11,7 +11,8 @@
         "Unity.ResourceManager",
         "LitMotion",
         "GameKit.SceneLauncher.VContainer",
-        "GameKit.Assets"
+        "GameKit.Assets",
+        "GameKit.Common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

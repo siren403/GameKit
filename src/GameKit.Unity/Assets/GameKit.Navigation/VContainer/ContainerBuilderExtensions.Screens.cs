@@ -16,7 +16,7 @@ namespace GameKit.Navigation.VContainer
             builder.Register<PagePresenter>(Lifetime.Singleton);
             builder.Register<PageStack>(Lifetime.Singleton);
 
-            builder.RegisterVitalRouter(routing => { routing.Map<PageNavigator>(); });
+            builder.RegisterVitalRouter(routing => routing.Map<PageNavigator>());
 
             var pages = new PagesBuilder(builder);
             configuration?.Invoke(pages);

@@ -41,7 +41,6 @@ namespace GameKit.Navigation.Screens.Page.Internal
 
             if (result)
             {
-                _logger.LogDebug("Cannot replace with the same page.");
                 _ = _router.PublishAsync(new PageErrorCommand(
                     pageId: pageId,
                     operation: PageOperation.None,
@@ -70,7 +69,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                     pageId: newPageId,
                     operation: PageOperation.To,
                     errorCode: PageErrorCodes.NotFound,
-                    message: $"Page '{newPageId}' not found: {newPageResult}"
+                    message: $"Page '{newPageId}' not found.\nReason: {newPageResult.FirstError}"
                 ));
                 return;
             }

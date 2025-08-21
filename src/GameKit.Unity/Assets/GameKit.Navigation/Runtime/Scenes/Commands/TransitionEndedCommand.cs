@@ -4,6 +4,6 @@ namespace GameKit.Navigation.Scenes.Commands
 {
     public readonly struct TransitionEndedCommand : ICommand
     {
-        public readonly string Path { get; init; }
+        public readonly string Label { get; init; }
     }
 }

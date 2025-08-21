@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using GameKit.Common.Results;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using VitalRouter;
 
 namespace GameKit.Navigation.Screens.Page.Internal
@@ -23,9 +20,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
         /// <summary>
         /// Id: Addressable Key
         /// </summary>
-        private readonly Dictionary<string, AsyncLazy<IPage>> _addressableFactories = new();
-
-        private readonly List<AsyncOperationHandle> _loadedHandles = new();
+        private readonly Dictionary<string, IPageFactory> _pageFactories = new();
 
         public IEnumerable<PageEntry> CachedPages => _cachedPages.Values;
 
@@ -72,21 +67,12 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 return;
             }
 
-            var factory = UniTask.Lazy(async () =>
+            var factory = new PageFactory<T>(key)
             {
-                var handle = Addressables.InstantiateAsync(key, parent);
-                await handle;
-                if (!handle.IsValid())
-                {
-                    throw new Exception(
-                        $"Failed to load page with ID '{pageId}' using Addressables. Status: {handle.Status}");
-                }
+                Parent = parent
+            };
 
-                _loadedHandles.Add(handle);
-                return handle.Result.GetComponent<T>() as IPage;
-            });
-
-            if (_addressableFactories.TryAdd(pageId, factory))
+            if (_pageFactories.TryAdd(pageId, factory))
             {
                 return;
             }
@@ -104,7 +90,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 return FastResult<PageEntry>.Ok(cached);
             }
 
-            if (!_addressableFactories.TryGetValue(pageId, out var factory))
+            if (!_pageFactories.TryGetValue(pageId, out var factory))
             {
                 return FastResult<PageEntry>.Fail(
                     "Page.GetPageAsync",
@@ -112,43 +98,33 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 );
             }
 
+            var result = await factory.InstantiateAsync();
+            if (result.IsError(out FastResult<PageEntry> fail))
+            {
+                return fail;
+            }
+
+            var page = result.Value;
             var router = new Router(CommandOrdering.Drop);
-            try
-            {
-                var page = await factory;
-                page.MapTo(router);
-                var entry = new PageEntry(
-                    pageId,
-                    page,
-                    router
-                );
-                _cachedPages[pageId] = entry;
-                return FastResult<PageEntry>.Ok(entry);
-            }
-            catch (Exception e)
-            {
-                return FastResult<PageEntry>.Fail(
-                    "Page.GetPage",
-                    $"Failed to load page with ID '{pageId}': {e.Message}"
-                );
-            }
+            page.MapTo(router);
+            var entry = new PageEntry(
+                pageId,
+                page,
+                router
+            );
+            _cachedPages[pageId] = entry;
+            return FastResult<PageEntry>.Ok(entry);
         }
 
         public void Dispose()
         {
-            foreach (var handle in _loadedHandles.Where(handle => handle.IsValid()))
-            {
-                Addressables.Release(handle);
-            }
-
             foreach (var entry in _cachedPages.Values)
             {
                 entry.Dispose();
             }
 
             _cachedPages.Clear();
-            _addressableFactories.Clear();
-            _loadedHandles.Clear();
+            _pageFactories.Clear();
         }
     }
 }

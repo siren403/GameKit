@@ -1,13 +1,11 @@
-﻿using System.Threading;
-using Cysharp.Threading.Tasks;
-using GameKit.Assets;
-using GameKit.Navigation.Scenes;
+﻿using GameKit.Navigation.Scenes;
 using GameKit.Navigation.VContainer;
 using GameKit.SceneLauncher.VContainer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
+using VitalRouter;
 using VitalRouter.VContainer;
 
 namespace Samples.Navigation.SceneOverview.Scenes
@@ -17,15 +15,8 @@ namespace Samples.Navigation.SceneOverview.Scenes
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Initialize()
         {
-            const string sampleMainScenePath = "Assets/Samples/Navigation/SceneOverview/Scenes/MainScene.unity";
-            var activeScene = SceneManager.GetActiveScene();
-            if (activeScene.path != sampleMainScenePath)
-            {
-                Debug.LogWarning($"MainScene is not loaded. Current active scene: {activeScene.path}");
-                return;
-            }
-
             var resolver = new SceneInstallerResolver();
+            const string sampleMainScenePath = "Assets/Samples/Navigation/SceneOverview/Scenes/MainScene.unity";
             resolver.Register(sampleMainScenePath, new MainScene());
 
             resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/FadeScene.unity",
@@ -36,6 +27,8 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 new IntroScene());
             resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/TransitionScene.unity",
                 new TransitionScene());
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Remote/TitleScene.unity",
+                new TitleScene());
             SceneScopeInitializer.Initialize(resolver);
         }
 
@@ -44,9 +37,10 @@ namespace Samples.Navigation.SceneOverview.Scenes
             builder.RegisterSceneNavigator(navigator =>
             {
                 // AutoStartup
-                navigator.AutoStartupFromMainScene("/intro");
+                // navigator.AutoStartupFromMainScene("/intro");
             });
             builder.RegisterVitalRouter(routing => { });
+            builder.RegisterEntryPoint<MainEntryPoint>();
             // builder.RegisterComponentInHierarchy<FadeCanvas>();
             // builder.RegisterBuildCallback(container =>
             // {
@@ -65,6 +59,25 @@ namespace Samples.Navigation.SceneOverview.Scenes
             // 전체 번들 캐시 제거
             var result = Caching.ClearCache();
             Debug.Log($"Caching.ClearCache: {result}");
+        }
+    }
+
+    public class MainEntryPoint : IInitializable
+    {
+        private readonly Router _router;
+
+        public MainEntryPoint(Router router)
+        {
+            _router = router;
+        }
+
+        public void Initialize()
+        {
+            var fromMainScene = SceneManager.GetActiveScene().buildIndex == 0;
+            if (fromMainScene)
+            {
+                _router.ToScene("/intro");
+            }
         }
     }
 }

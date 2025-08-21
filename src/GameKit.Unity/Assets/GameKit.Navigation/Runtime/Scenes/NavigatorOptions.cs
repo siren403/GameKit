@@ -3,7 +3,5 @@
     public record NavigatorOptions
     {
         public readonly string Root = "/";
-        public bool AutoStartup { get; init; } = true;
-        public string EntryPath { get; init; } = string.Empty;
     }
 }

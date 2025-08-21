@@ -8,18 +8,18 @@ using VContainer.Unity;
 
 namespace GameKit.Navigation.VContainer
 {
-    public class SceneNavigatorInitializer : IAsyncStartable
-    {
-        private readonly SceneNavigator _navigator;
-
-        public SceneNavigatorInitializer(SceneNavigator navigator)
-        {
-            _navigator = navigator;
-        }
-
-        public UniTask StartAsync(CancellationToken cancellation = default)
-        {
-            return _navigator.InitializeAsync();
-        }
-    }
+    // public class SceneNavigatorInitializer : IAsyncStartable
+    // {
+    //     private readonly SceneNavigator _navigator;
+    //
+    //     public SceneNavigatorInitializer(SceneNavigator navigator)
+    //     {
+    //         _navigator = navigator;
+    //     }
+    //
+    //     public UniTask StartAsync(CancellationToken cancellation = default)
+    //     {
+    //         return _navigator.InitializeAsync(cancellation);
+    //     }
+    // }
 }

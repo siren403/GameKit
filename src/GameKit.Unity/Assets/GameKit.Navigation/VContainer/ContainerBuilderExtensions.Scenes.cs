@@ -11,6 +11,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
+using VitalRouter.VContainer;
 
 namespace GameKit.Navigation.VContainer
 {
@@ -19,29 +20,20 @@ namespace GameKit.Navigation.VContainer
         public static void RegisterSceneNavigator(this IContainerBuilder builder,
             Action<SceneNavigatorBuilder> configure)
         {
-            var nav = new SceneNavigatorBuilder(builder);
-            configure(nav);
+            var navigator = new SceneNavigatorBuilder(builder);
+            configure(navigator);
 
             var options = new NavigatorOptions()
             {
-                AutoStartup = nav.AutoStartup,
-                EntryPath = nav.EntryLabel,
             };
             builder.RegisterInstance(options);
-            builder.Register<SceneNavigator>(Lifetime.Singleton).AsSelf();
-            if (options.AutoStartup)
-            {
-                builder.RegisterEntryPoint<SceneNavigatorInitializer>();
-            }
+            builder.RegisterVitalRouter(routing => routing.Map<SceneNavigator>());
         }
     }
 
     public class SceneNavigatorBuilder
     {
         private readonly IContainerBuilder _builder;
-
-        public bool AutoStartup = true;
-        public string EntryLabel { get; set; } = string.Empty;
 
         public SceneNavigatorBuilder(IContainerBuilder builder)
         {
@@ -50,26 +42,14 @@ namespace GameKit.Navigation.VContainer
     }
 
 
-    public static class NavigatorExtensions
-    {
-#if !UNITY_WEBGL
-        private static readonly AsyncLazy _readyCache = new(async () =>
-        {
-            await UniTask.WaitUntil(() => Caching.ready);
-        });
-#endif
-
-        /// <summary>
-        /// Auto startup
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <param name="label"></param>
-        public static void AutoStartupFromMainScene(this SceneNavigatorBuilder builder, string label)
-        {
-            builder.AutoStartup = SceneManager.GetSceneAt(0).buildIndex == 0;
-            builder.EntryLabel = label;
-        }
-
+// public static class NavigatorExtensions
+// {
+// #if !UNITY_WEBGL
+//         private static readonly AsyncLazy _readyCache = new(async () =>
+//         {
+//             await UniTask.WaitUntil(() => Caching.ready);
+//         });
+// #endif
 //         [Obsolete]
 //         public static async UniTask CheckForUpdates(this SceneNavigator navigator)
 //         {
@@ -95,5 +75,5 @@ namespace GameKit.Navigation.VContainer
 //             await navigator.ClearAsync();
 //             await navigator.StartupAsync();
 //         }
-    }
+// }
 }

@@ -1,3 +1,5 @@
+using System;
+using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
 using GameKit.Navigation.VContainer;
 using Samples.Navigation.PageQuickStart.Pages;
@@ -62,9 +64,11 @@ namespace Samples.Navigation.PageQuickStart
                 settingsTo.clicked += () => _router.ToPageAsync(PageIds.Settings);
                 settingsPush.clicked += () => _router.PushPageAsync(PageIds.Settings);
                 settingsReplace.clicked += () => _router.ReplacePageAsync(PageIds.Settings);
-                
+
                 var back = root.Q<Button>(classes: new[] { "back" });
                 back.clicked += () => _router.BackPageAsync();
+
+                _router.Subscribe<PageErrorCommand>((command, context) => { Debug.Log(command); });
             }
         }
     }

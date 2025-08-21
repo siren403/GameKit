@@ -7,7 +7,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
     {
         public void Install(IContainerBuilder builder)
         {
-            builder.RegisterEntryPoint<IntroSceneEntryPoint>();
+            builder.RegisterEntryPoint<IntroEntryPoint>();
         }
     }
 }
