@@ -7,6 +7,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Assets.Extensions;
+using GameKit.Common.Results;
 using GameKit.Navigation.Scenes.Commands;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -36,16 +37,11 @@ namespace GameKit.Navigation.Scenes
             _loadedLocation = _options.Root;
         }
 
-        [Route]
-        private async UniTask On(ToSceneCommand command, PublishContext context)
+        private async UniTask RunBuiltInProcessAsync(string label, int sceneIndex, CancellationToken ct)
         {
-            var label = command.Label;
-            var ct = context.CancellationToken;
-
-            if (_options.BuiltInScenes.TryGetValue(label, out var sceneIndex))
+            await using (await NavigationScope.CreateAsync(_router, label, ct))
             {
                 await UnloadScenesAsync();
-
                 var operation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
                 if (operation == null)
                 {
@@ -58,37 +54,39 @@ namespace GameKit.Navigation.Scenes
 
                 _loadedScenes.Enqueue(SceneManager.GetSceneByBuildIndex(sceneIndex));
                 _loadedLocation = label;
+            }
+        }
+
+        [Route]
+        private async UniTask On(ToSceneCommand command, PublishContext context)
+        {
+            var label = command.Label;
+            var ct = context.CancellationToken;
+
+            #region BuiltIn
+
+            if (_options.BuiltInScenes.TryGetValue(label, out var sceneIndex))
+            {
+                await RunBuiltInProcessAsync(label, sceneIndex, ct);
                 return;
             }
 
-            var catalogResult = await AddressableOperations.CheckCatalog(context.CancellationToken);
-            if (catalogResult.IsError)
+            #endregion
+
+            #region Remote Setup
+
+            var planResult = await ToScenePlanCommand.CreateReadyAsync(command.Label, ct: ct);
+            if (planResult.IsError)
             {
                 // TODO: SceneErrorCommand
-                Debug.LogError($"Failed to check catalog: {catalogResult}");
+                Debug.LogError($"Failed to create scene plan for '{label}': {planResult}");
                 return;
             }
 
-            var planResult = await ToScenePlanCommand.CreateUsingDownloadManifestAsync(label, ct: ct);
-            if (planResult.IsError)
-            {
-                Debug.LogError($"Failed to create ToScenePlanCommand: {planResult}");
-                return;
-            }
-
-            // TODO: ILogger<SceneNavigator>
-            Debug.Log($"Plan Manifest: {planResult.Value.Manifest}");
-
-            planResult = await ToScenePlanCommand.ToDownloadLocationsAsync(planResult.Value, ct: ct);
-            if (planResult.IsError)
-            {
-                Debug.LogError($"Failed to download locations: {planResult}");
-                return;
-            }
+            #endregion
 
             await InternalToScenePlanAsync(planResult.Value, ct);
         }
-
 
         [Route]
         private async UniTask On(ToScenePlanCommand command, PublishContext context)
@@ -99,88 +97,80 @@ namespace GameKit.Navigation.Scenes
         private async UniTask InternalToScenePlanAsync(ToScenePlanCommand command, CancellationToken ct = default)
         {
             var (label, manifest, transitionLocation) = command;
-            await _router.PublishAsync(new NavigationStartedCommand()
-            {
-                Label = label
-            }, ct);
 
-            if (!manifest.IsDownloaded)
+            await using (await NavigationScope.CreateAsync(_router, label, ct))
             {
-                var downloadResult = await AddressableOperations.DownloadAsync(manifest, ct: ct);
-                if (downloadResult.IsError)
+                if (!manifest.IsDownloaded)
                 {
-                    // TODO: SceneErrorCommand
-                    return;
+                    var downloadResult = await AddressableOperations.DownloadAsync(manifest, ct: ct);
+                    if (downloadResult.IsError)
+                    {
+                        // TODO: SceneErrorCommand
+                        return;
+                    }
                 }
-            }
 
 #if UNITY_EDITOR
-            if (_loadedLocation == _options.Root)
-            {
-                await CleanupScenes();
-            }
+                if (_loadedLocation == _options.Root)
+                {
+                    await CleanupScenes();
+                }
 #endif
-            await using (await TransitionScope.CreateAsync(label, transitionLocation, _router, ct))
-            {
-                if (_loadedLocation != _options.Root)
+                await using (await TransitionScope.CreateAsync(label, transitionLocation, _router, ct))
                 {
-                    await UnloadScenesAsync();
-                }
-
-                _loadedLocation = string.Empty;
-
-                await LoadAsync();
-                _loadedLocation = label;
-            }
-
-            await _router.PublishAsync(new NavigationEndedCommand()
-            {
-                Label = label
-            }, ct);
-
-            return;
-
-
-            async UniTask LoadAsync()
-            {
-                GetLoadedScenes(_loadedScenesCache);
-                _loadedSceneHandleCache.Clear();
-                // TODO: 리팩토링 필요
-                foreach (IResourceLocation location in manifest.Locations
-                             .Where(location => transitionLocation != location)
-                             .Where(location => location.ResourceType == typeof(SceneInstance)))
-                {
-                    if (_loadedScenesCache.Any(scene => scene.path == location.ToString()))
+                    if (_loadedLocation != _options.Root)
                     {
-                        continue;
+                        await UnloadScenesAsync();
                     }
 
-                    AsyncOperationHandle<SceneInstance> handle = Addressables.LoadSceneAsync(
-                        location,
-                        LoadSceneMode.Additive,
-                        SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
-                        false
+                    _loadedLocation = string.Empty;
+
+                    await LoadAsync(manifest.Locations
+                        .Where(location => transitionLocation != location)
+                        .Where(location => location.ResourceType == typeof(SceneInstance))
                     );
-
-                    var loadSceneResult = await handle.OrError();
-                    if (loadSceneResult.IsError)
-                    {
-                        // TODO: SceneErrorCommand, Restore previous state
-                        Debug.LogError($"Failed to load scene '{location}': {loadSceneResult}");
-                        break;
-                    }
-
-                    _loadedSceneHandleCache.Add(handle);
-                    _loadedScenes.Enqueue(loadSceneResult.Value.Scene);
+                    _loadedLocation = label;
                 }
-
-                foreach (AsyncOperationHandle<SceneInstance> handle in _loadedSceneHandleCache)
-                {
-                    await handle.Result.ActivateAsync();
-                }
-
-                _loadedSceneHandleCache.Clear();
             }
+        }
+
+        private async UniTask LoadAsync(IEnumerable<IResourceLocation> locations)
+        {
+            GetLoadedScenes(_loadedScenesCache);
+            _loadedSceneHandleCache.Clear();
+
+            foreach (IResourceLocation location in locations)
+            {
+                if (_loadedScenesCache.Any(scene => scene.path == location.ToString()))
+                {
+                    continue;
+                }
+
+                AsyncOperationHandle<SceneInstance> handle = Addressables.LoadSceneAsync(
+                    location,
+                    LoadSceneMode.Additive,
+                    SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
+                    false
+                );
+
+                var loadSceneResult = await handle.OrError();
+                if (loadSceneResult.IsError)
+                {
+                    // TODO: SceneErrorCommand, Restore previous state
+                    Debug.LogError($"Failed to load scene '{location}': {loadSceneResult}");
+                    break;
+                }
+
+                _loadedSceneHandleCache.Add(handle);
+                _loadedScenes.Enqueue(loadSceneResult.Value.Scene);
+            }
+
+            foreach (AsyncOperationHandle<SceneInstance> handle in _loadedSceneHandleCache)
+            {
+                await handle.Result.ActivateAsync();
+            }
+
+            _loadedSceneHandleCache.Clear();
         }
 
         /// <summary>

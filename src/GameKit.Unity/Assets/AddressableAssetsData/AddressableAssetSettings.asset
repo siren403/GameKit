@@ -78,11 +78,11 @@ MonoBehaviour:
       - m_Id: 15cac6a6805705e4f8cb01434f267ab0
         m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
       - m_Id: 64bdc5f871a37834ca37847c6d365166
-        m_Value: 'ServerData/[BuildTarget]'
+        m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: c38bf098fa999e141817611513e09504
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: d365c1973da41094e8cd35f7faa402ff
-        m_Value: <undefined>
+        m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
     - m_InheritedParent: 
       m_Id: 1a38e0dc047efb142b1abd37256cde4e
       m_ProfileName: Localhost
@@ -135,4 +135,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 21cdd7cb2a588374a8c91b36ffb9d61e, type: 2}
   - {fileID: 11400000, guid: 7b81ed7d7a6a11646a9947c02656acfe, type: 2}
   - {fileID: 11400000, guid: 03c5dc7cbf48dfa44a2bcac62aaa789f, type: 2}
-  m_ActiveProfileId: 80e57e30e20220e4eb79cc6c8e36dd61
+  m_ActiveProfileId: 1a38e0dc047efb142b1abd37256cde4e

@@ -12,6 +12,42 @@ using VitalRouter;
 
 namespace GameKit.Navigation.Scenes
 {
+    public readonly struct NavigationScope : IAsyncDisposable
+    {
+        private readonly Router _router;
+        private readonly string _label;
+        private readonly CancellationToken _ct;
+
+        public static async UniTask<NavigationScope> CreateAsync(
+            Router router,
+            string label,
+            CancellationToken ct = default
+        )
+        {
+            await router.PublishAsync(new NavigationStartedCommand()
+            {
+                Label = label
+            }, ct);
+
+            return new NavigationScope(router, label, ct);
+        }
+
+        private NavigationScope(Router router, string label, CancellationToken ct)
+        {
+            _router = router;
+            _label = label;
+            _ct = ct;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _router.PublishAsync(new NavigationEndedCommand()
+            {
+                Label = _label
+            }, _ct);
+        }
+    }
+
     public readonly struct TransitionScope : IAsyncDisposable
     {
         private readonly string _loadingLabel;

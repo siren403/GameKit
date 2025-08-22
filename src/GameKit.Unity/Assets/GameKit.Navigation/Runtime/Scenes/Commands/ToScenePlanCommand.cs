@@ -114,5 +114,27 @@ namespace GameKit.Navigation.Scenes.Commands
                 }
             );
         }
+
+        public static async UniTask<FastResult<ToScenePlanCommand>> CreateReadyAsync(
+            string label,
+            bool appendTransition = true,
+            CancellationToken ct = default
+        )
+        {
+            var catalogResult = await AddressableOperations.CheckCatalog(ct);
+            if (catalogResult.IsError(out FastResult<ToScenePlanCommand> fail))
+            {
+                return fail;
+            }
+
+            var planResult = await CreateUsingDownloadManifestAsync(label, appendTransition, ct);
+            if (planResult.IsError(out fail))
+            {
+                return fail;
+            }
+
+            planResult = await ToDownloadLocationsAsync(planResult.Value, ct: ct);
+            return planResult.IsError(out fail) ? fail : planResult;
+        }
     }
 }

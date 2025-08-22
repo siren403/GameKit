@@ -20,7 +20,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
     // 참조 되지 않는 캐시 항목 제거
     // var result = await Addressables.CleanBundleCache().Task.AsUniTask();
     // Debug.Log($"Addressables.CleanBundleCache: {result}");
-    public class IntroEntryPoint : ITickable, IProgress<DownloadStatus>, IInitializable, IStartable
+    public class IntroEntryPoint : IInitializable, IStartable
     {
         private readonly Router _router;
         private readonly InitPage _initPage;
@@ -95,7 +95,8 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 await _downloadPage.OnClickDownload.FirstAsync();
                 _downloadPage.Message = "Downloading...";
 
-                var planResult = await ToScenePlanCommand.ToDownloadLocationsAsync(command, new DownloadLogger(_downloadPage));
+                var planResult =
+                    await ToScenePlanCommand.ToDownloadLocationsAsync(command, new DownloadLogger(_downloadPage));
                 if (planResult.IsError)
                 {
                     _downloadPage.Message = planResult.ToString();
@@ -135,63 +136,6 @@ namespace Samples.Navigation.SceneOverview.Scenes
         public void Start()
         {
             _router.ToPage(nameof(InitPage));
-        }
-
-        public void Tick()
-        {
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                Debug.Log("Enter to async");
-                _router.ToScene("/title");
-            }
-            else if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                ManualToSceneAsync("/title", Application.exitCancellationToken).Forget();
-            }
-        }
-
-        private async UniTaskVoid ManualToSceneAsync(string label, CancellationToken ct)
-        {
-            // Check catalog
-            var catalogResult = await AddressableOperations.CheckCatalog(ct);
-            if (catalogResult.IsError)
-            {
-                Debug.LogError($"Failed to check catalog: {catalogResult}");
-                return;
-            }
-
-            Debug.Log("Successfully checked catalog.");
-
-            var planResult = await ToScenePlanCommand.CreateUsingDownloadManifestAsync(label, ct: ct);
-            if (planResult.IsError)
-            {
-                Debug.LogError($"Failed to create ToScenePlanCommand: {planResult}");
-                return;
-            }
-
-            Debug.Log($"Plan Manifest: {planResult.Value.Manifest}");
-
-            if (planResult.Value.Manifest.IsDownloaded == false)
-            {
-                Debug.Log($"Download? {planResult.Value.Manifest.Size}");
-                await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Return), cancellationToken: ct);
-            }
-
-            planResult = await ToScenePlanCommand.ToDownloadLocationsAsync(planResult.Value, this, ct);
-            if (planResult.IsError)
-            {
-                Debug.LogError($"Failed to download locations: {planResult}");
-                return;
-            }
-
-            _ = _router.PublishAsync(planResult.Value, ct);
-        }
-
-        public void Report(DownloadStatus value)
-        {
-            ByteSize downloaded = value.DownloadedBytes;
-            ByteSize total = value.TotalBytes;
-            Debug.Log($"Download status: {downloaded}/{total} ({value.Percent:P2})");
         }
     }
 }
