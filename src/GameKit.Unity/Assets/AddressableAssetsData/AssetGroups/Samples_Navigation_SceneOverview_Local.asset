@@ -27,12 +27,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - /init
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7e0b3f80b8bd1064199452100a146d7b
-    m_Address: Assets/Samples/Navigation/SceneOverview/Scenes/Local/IntroScene.unity
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - /intro
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8cd9f8608cd6455409bd54d638b4dd3f
     m_Address: Assets/Samples/Navigation/SceneOverview/Scenes/Local/FadeScene.unity
     m_ReadOnly: 0

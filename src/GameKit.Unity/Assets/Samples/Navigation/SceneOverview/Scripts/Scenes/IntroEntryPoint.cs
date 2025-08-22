@@ -4,10 +4,15 @@ using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Navigation.Scenes.Commands;
 using GameKit.Navigation.Scenes.Extensions;
+using GameKit.Navigation.Screens.Page.Commands;
+using GameKit.Navigation.Screens.Page.Extensions;
+using R3;
+using Samples.Navigation.SceneOverview.Pages;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer.Unity;
 using VitalRouter;
+using VitalRouter.R3;
 
 namespace Samples.Navigation.SceneOverview.Scenes
 {
@@ -15,13 +20,121 @@ namespace Samples.Navigation.SceneOverview.Scenes
     // 참조 되지 않는 캐시 항목 제거
     // var result = await Addressables.CleanBundleCache().Task.AsUniTask();
     // Debug.Log($"Addressables.CleanBundleCache: {result}");
-    public class IntroEntryPoint : ITickable, IProgress<DownloadStatus>
+    public class IntroEntryPoint : ITickable, IProgress<DownloadStatus>, IInitializable, IStartable
     {
         private readonly Router _router;
+        private readonly InitPage _initPage;
+        private readonly ErrorPage _errorPage;
+        private readonly DownloadPage _downloadPage;
 
-        public IntroEntryPoint(Router router)
+        public IntroEntryPoint(Router router, InitPage initPage, ErrorPage errorPage, DownloadPage downloadPage)
         {
             _router = router;
+            _initPage = initPage;
+            _errorPage = errorPage;
+            _downloadPage = downloadPage;
+        }
+
+        public void Initialize()
+        {
+            _initPage.OnClickInit.SubscribeAwait(async (_, ct) =>
+            {
+                Debug.Log("Initializing Addressables...");
+                var initResult = await AddressableOperations.InitializeAsync(ct);
+                if (initResult.IsError)
+                {
+                    Debug.LogError($"Failed to initialize Addressables: {initResult}");
+                    return;
+                }
+
+                var catalogResult = await AddressableOperations.CheckCatalog(ct);
+                if (catalogResult.IsError)
+                {
+                    Debug.LogError($"Failed to check catalog: {catalogResult}");
+                    PushErrorPage(catalogResult.ToString());
+                    return;
+                }
+
+                var planTask = ToScenePlanCommand.CreateUsingDownloadManifestAsync("/title", ct: ct);
+                var planResult = await planTask;
+                if (planResult.IsError)
+                {
+                    PushErrorPage(planResult.ToString());
+                    return;
+                }
+
+                var plan = planResult.Value;
+                if (plan.Manifest.IsDownloaded)
+                {
+                    NextScene(plan);
+                }
+                else
+                {
+                    ToDownloadPage(plan).Forget();
+                }
+            }, AwaitOperation.Drop);
+
+            _errorPage.OnClickBack.SubscribeAwait(
+                async (_, ct) => { await _router.BackPageAsync(ct); },
+                AwaitOperation.Drop
+            );
+
+            return;
+
+            void PushErrorPage(string message)
+            {
+                _errorPage.Message = message;
+                _router.PushPage(nameof(ErrorPage));
+            }
+
+            async UniTaskVoid ToDownloadPage(ToScenePlanCommand command)
+            {
+                _downloadPage.Message = $"Download {command.Label}? {command.Manifest.Size}";
+                _downloadPage.Progress = 0;
+                await _router.ToPageAsync(nameof(DownloadPage));
+                await _downloadPage.OnClickDownload.FirstAsync();
+                _downloadPage.Message = "Downloading...";
+
+                var planResult = await ToScenePlanCommand.ToDownloadLocationsAsync(command, new DownloadLogger(_downloadPage));
+                if (planResult.IsError)
+                {
+                    _downloadPage.Message = planResult.ToString();
+                    return;
+                }
+
+                _downloadPage.Message = "Completed download.";
+                await UniTask.Delay(1000); // 잠시 대기 후 페이지 닫기
+
+                NextScene(planResult.Value);
+            }
+
+            void NextScene(ToScenePlanCommand command)
+            {
+                _router.ToScene(command);
+            }
+        }
+
+        class DownloadLogger : IProgress<DownloadStatus>
+        {
+            private readonly DownloadPage _page;
+
+            public DownloadLogger(DownloadPage page)
+            {
+                _page = page;
+            }
+
+            public void Report(DownloadStatus value)
+            {
+                ByteSize downloaded = value.DownloadedBytes;
+                ByteSize total = value.TotalBytes;
+                Debug.Log($"Download status: {downloaded}/{total} ({value.Percent:P2})");
+                _page.Progress = value.Percent;
+            }
+        }
+
+        public void Start()
+        {
+            _router.ToPage(nameof(InitPage));
         }
 
         public void Tick()

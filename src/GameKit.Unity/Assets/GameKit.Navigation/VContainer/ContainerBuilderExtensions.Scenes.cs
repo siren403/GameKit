@@ -2,6 +2,8 @@
 // The.NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
@@ -22,12 +24,7 @@ namespace GameKit.Navigation.VContainer
         {
             var navigator = new SceneNavigatorBuilder(builder);
             configure(navigator);
-
-            var options = new NavigatorOptions()
-            {
-            };
-            builder.RegisterInstance(options);
-            builder.RegisterVitalRouter(routing => routing.Map<SceneNavigator>());
+            navigator.Build();
         }
     }
 
@@ -35,9 +32,26 @@ namespace GameKit.Navigation.VContainer
     {
         private readonly IContainerBuilder _builder;
 
+        private readonly Dictionary<string, int> _builtInScenes = new();
+
         public SceneNavigatorBuilder(IContainerBuilder builder)
         {
             _builder = builder;
+        }
+
+        public void RegisterBuiltInScene(string label, int sceneIndex)
+        {
+            _builtInScenes[label] = sceneIndex;
+        }
+
+        public void Build()
+        {
+            var options = new NavigatorOptions()
+            {
+                BuiltInScenes = new ReadOnlyDictionary<string, int>(_builtInScenes)
+            };
+            _builder.RegisterInstance(options);
+            _builder.RegisterVitalRouter(routing => routing.Map<SceneNavigator>());
         }
     }
 

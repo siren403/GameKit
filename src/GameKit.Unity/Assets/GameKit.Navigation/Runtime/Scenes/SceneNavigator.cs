@@ -23,11 +23,11 @@ namespace GameKit.Navigation.Scenes
     {
         private readonly NavigatorOptions _options;
         private readonly Router _router;
-        private readonly HashSet<string> _loadedScenesCache = new();
+        private readonly HashSet<Scene> _loadedScenesCache = new();
         private readonly List<AsyncOperationHandle<SceneInstance>> _loadedSceneHandleCache = new();
 
         private string _loadedLocation;
-        private readonly Queue<IResourceLocation> _loadedLocations = new();
+        private readonly Queue<Scene> _loadedScenes = new();
 
         public SceneNavigator(NavigatorOptions options, Router router)
         {
@@ -37,11 +37,37 @@ namespace GameKit.Navigation.Scenes
         }
 
         [Route]
-        [Filter(typeof(CheckCatalog))]
         private async UniTask On(ToSceneCommand command, PublishContext context)
         {
             var label = command.Label;
             var ct = context.CancellationToken;
+
+            if (_options.BuiltInScenes.TryGetValue(label, out var sceneIndex))
+            {
+                await UnloadScenesAsync();
+
+                var operation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
+                if (operation == null)
+                {
+                    // TODO: SceneErrorCommand
+                    Debug.LogError($"Failed to load built-in scene '{label}' with index {sceneIndex}");
+                    return;
+                }
+
+                await operation;
+
+                _loadedScenes.Enqueue(SceneManager.GetSceneByBuildIndex(sceneIndex));
+                _loadedLocation = label;
+                return;
+            }
+
+            var catalogResult = await AddressableOperations.CheckCatalog(context.CancellationToken);
+            if (catalogResult.IsError)
+            {
+                // TODO: SceneErrorCommand
+                Debug.LogError($"Failed to check catalog: {catalogResult}");
+                return;
+            }
 
             var planResult = await ToScenePlanCommand.CreateUsingDownloadManifestAsync(label, ct: ct);
             if (planResult.IsError)
@@ -91,14 +117,14 @@ namespace GameKit.Navigation.Scenes
 #if UNITY_EDITOR
             if (_loadedLocation == _options.Root)
             {
-                await UnloadUnmanagedScenes();
+                await CleanupScenes();
             }
 #endif
             await using (await TransitionScope.CreateAsync(label, transitionLocation, _router, ct))
             {
                 if (_loadedLocation != _options.Root)
                 {
-                    await UnloadAsync();
+                    await UnloadScenesAsync();
                 }
 
                 _loadedLocation = string.Empty;
@@ -114,27 +140,6 @@ namespace GameKit.Navigation.Scenes
 
             return;
 
-            async UniTask UnloadAsync()
-            {
-                GetLoadedScenes(_loadedScenesCache);
-
-                while (_loadedLocations.TryDequeue(out var location))
-                {
-                    string locationString = location.ToString();
-                    if (!_loadedScenesCache.Contains(locationString))
-                    {
-                        continue;
-                    }
-
-                    var operation = SceneManager.UnloadSceneAsync(locationString);
-                    if (operation == null)
-                    {
-                        continue;
-                    }
-
-                    await operation;
-                }
-            }
 
             async UniTask LoadAsync()
             {
@@ -145,8 +150,7 @@ namespace GameKit.Navigation.Scenes
                              .Where(location => transitionLocation != location)
                              .Where(location => location.ResourceType == typeof(SceneInstance)))
                 {
-                    string locationString = location.ToString();
-                    if (_loadedScenesCache.Contains(locationString))
+                    if (_loadedScenesCache.Any(scene => scene.path == location.ToString()))
                     {
                         continue;
                     }
@@ -162,12 +166,12 @@ namespace GameKit.Navigation.Scenes
                     if (loadSceneResult.IsError)
                     {
                         // TODO: SceneErrorCommand, Restore previous state
-                        Debug.LogError($"Failed to load scene '{locationString}': {loadSceneResult}");
+                        Debug.LogError($"Failed to load scene '{location}': {loadSceneResult}");
                         break;
                     }
 
                     _loadedSceneHandleCache.Add(handle);
-                    _loadedLocations.Enqueue(location);
+                    _loadedScenes.Enqueue(loadSceneResult.Value.Scene);
                 }
 
                 foreach (AsyncOperationHandle<SceneInstance> handle in _loadedSceneHandleCache)
@@ -179,11 +183,35 @@ namespace GameKit.Navigation.Scenes
             }
         }
 
+        /// <summary>
+        /// LoadedScenes에 있지만 실제 씬으로 로드되지 않은 씬들을 제외하고 언로드한다.
+        /// TODO: LoadedScenes가 항상 유요한 상태를 유지 할 수 있도록 개선 필요
+        /// </summary>
+        private async UniTask UnloadScenesAsync()
+        {
+            GetLoadedScenes(_loadedScenesCache);
+
+            while (_loadedScenes.TryDequeue(out var scene))
+            {
+                if (!_loadedScenesCache.Contains(scene))
+                {
+                    continue;
+                }
+
+                var operation = SceneManager.UnloadSceneAsync(scene);
+                if (operation == null)
+                {
+                    continue;
+                }
+
+                await operation;
+            }
+        }
 
         /// <summary>
         /// MainScene에서 시작했을때 다른 씬 언로드에 사용
         /// </summary>
-        private async UniTask UnloadUnmanagedScenes()
+        private async UniTask CleanupScenes()
         {
             for (var i = 0; i < SceneManager.loadedSceneCount; ++i)
             {
@@ -197,12 +225,12 @@ namespace GameKit.Navigation.Scenes
             }
         }
 
-        private void GetLoadedScenes(in HashSet<string> cache)
+        private void GetLoadedScenes(in HashSet<Scene> cache)
         {
             cache.Clear();
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                cache.Add(SceneManager.GetSceneAt(i).path);
+                cache.Add(SceneManager.GetSceneAt(i));
             }
         }
     }

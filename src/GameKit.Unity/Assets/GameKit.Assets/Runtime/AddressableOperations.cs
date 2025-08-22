@@ -14,12 +14,14 @@ namespace GameKit.Assets
 {
     public static class AddressableOperations
     {
-        public static async UniTask<AsyncHandleSnapshot<IResourceLocator>> InitializeAsync(
+        public static async UniTask<FastResult<IResourceLocator>> InitializeAsync(
             CancellationToken ct = default)
         {
             var handle = Addressables.InitializeAsync(false);
             var snapshot = await handle.CaptureWithRelease();
-            return snapshot;
+            return snapshot.IsSuccess
+                ? FastResult<IResourceLocator>.Ok(snapshot.Result)
+                : FastResult<IResourceLocator>.Fail("Addressables.InitializeFailed");
         }
 
         public static async UniTask<FastResult<List<string>>> CheckCatalog(

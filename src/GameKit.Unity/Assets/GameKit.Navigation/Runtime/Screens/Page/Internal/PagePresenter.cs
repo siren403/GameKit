@@ -21,7 +21,10 @@ namespace GameKit.Navigation.Screens.Page.Internal
             _rendering.Clear();
         }
 
-        public async UniTask<FastResult<Void>> ShowPageAsync(PageEntry entry, CancellationToken ct = default)
+        public async UniTask<FastResult<Void>> ShowPageAsync(
+            PageEntry entry,
+            CancellationToken ct = default
+        )
         {
             var (id, _, router) = entry;
             try

@@ -1,4 +1,7 @@
-﻿using GameKit.Navigation.Scenes;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Scenes;
+using GameKit.Navigation.Scenes.Commands;
 using GameKit.Navigation.Scenes.Extensions;
 using GameKit.Navigation.VContainer;
 using GameKit.SceneLauncher.VContainer;
@@ -24,7 +27,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 new FadeScene());
             resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/InitializeScene.unity",
                 new InitializeScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/IntroScene.unity",
+            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/IntroScene.unity",
                 new IntroScene());
             resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/TransitionScene.unity",
                 new TransitionScene());
@@ -39,45 +42,38 @@ namespace Samples.Navigation.SceneOverview.Scenes
             {
                 // AutoStartup
                 // navigator.AutoStartupFromMainScene("/intro");
+                navigator.RegisterBuiltInScene("/intro", 1);
             });
             builder.RegisterVitalRouter(routing => { });
             builder.RegisterEntryPoint<MainEntryPoint>();
-            // builder.RegisterComponentInHierarchy<FadeCanvas>();
-            // builder.RegisterBuildCallback(container =>
-            // {
-            //     var router = container.Resolve<Router>();
-            //     var fade = container.Resolve<FadeCanvas>();
-            //     var ct = Application.exitCancellationToken;
-            //     router.SubscribeAwait<NavigationStartedCommand>(async (command, ctx) =>
-            //     {
-            //         await fade.InAsync(ct: ctx.CancellationToken);
-            //     }).AddTo(ct);
-            //     router.SubscribeAwait<NavigationEndedCommand>(async (command, ctx) =>
-            //     {
-            //         await fade.OutAsync(ct: ctx.CancellationToken);
-            //     }).AddTo(ct);
-            // });
+            builder.RegisterComponentInHierarchy<FadeCanvas>();
             // 전체 번들 캐시 제거
             var result = Caching.ClearCache();
             Debug.Log($"Caching.ClearCache: {result}");
         }
     }
 
-    public class MainEntryPoint : IInitializable
+    public class MainEntryPoint : IAsyncStartable
     {
         private readonly Router _router;
+        private readonly FadeCanvas _fade;
 
-        public MainEntryPoint(Router router)
+        public MainEntryPoint(Router router, FadeCanvas fade)
         {
             _router = router;
+            _fade = fade;
         }
 
-        public void Initialize()
+        public async UniTask StartAsync(CancellationToken cancellation = new CancellationToken())
         {
             var fromMainScene = SceneManager.GetActiveScene().buildIndex == 0;
             if (fromMainScene)
             {
-                _router.ToScene("/intro");
+                await _router.PublishAsync(new ToSceneCommand()
+                {
+                    Label = "/intro"
+                }, cancellation);
+                await _fade.OutAsync(ct: cancellation);
             }
         }
     }

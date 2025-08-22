@@ -1,0 +1,20 @@
+{
+    "name": "GameKit.Navigation.Components",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.Navigation",
+        "LitMotion",
+        "LitMotion.Animation",
+        "VitalRouter",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

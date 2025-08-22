@@ -18,7 +18,12 @@ namespace GameKit.Navigation.Scenes.Extensions
                 throw new ArgumentException("Label cannot be null or empty.", nameof(label));
             }
 
-            router.PublishAsync(new ToSceneCommand {Label = label});
+            router.PublishAsync(new ToSceneCommand { Label = label });
+        }
+
+        public static void ToScene(this Router router, ToScenePlanCommand command)
+        {
+            router.PublishAsync(command);
         }
     }
 }

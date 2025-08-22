@@ -6,7 +6,18 @@
     xmlns:uie="UnityEditor.UIElements"
     xsi:noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd">
     <ui:Style src="./IntroScene.uss" />
-    <ui:VisualElement>
+    <ui:VisualElement class="header">
+        <ui:Button text="Back" />
         <ui:Label text="IntroScene" />
+    </ui:VisualElement>
+    <ui:VisualElement class="pages pages__focus-1">
+        <ui:VisualElement class="page page-1 intro__init">
+            <ui:Label text="Init Page" />
+            <ui:Button text="Initialize" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="page page-2 intro__to-title">
+            <ui:Label text="To Title" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

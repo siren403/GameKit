@@ -1,3 +1,63 @@
 Label {
     font-size: 100px;
+    color: white;
+}
+
+.header {
+    flex-direction: row-reverse;
+}
+
+.header > Button {
+    width: 200px;
+    font-size: 50px;
+    color: white;
+    background-color: #007acc;
+    border-radius: 5px;
+}
+
+.pages {
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    transition-property: translate;
+    transition-duration: 0.3s;
+    flex-direction: row;
+}
+
+.pages__focus-1 {
+    translate: 0;
+}
+
+.pages__focus-2 {
+    translate: -100% 0;
+}
+
+.page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-1 {
+    translate: 0;
+}
+
+.page-2 {
+    translate: 100% 0;
+}
+
+.page-3 {
+    translate: 200% 0;
+}
+
+.intro__init > Button {
+    width: 400px;
+    height: 150px;
+    font-size: 50px;
+    color: white;
+    background-color: #007acc;
+    border-radius: 5px;
+    bottom: -400px;
 }

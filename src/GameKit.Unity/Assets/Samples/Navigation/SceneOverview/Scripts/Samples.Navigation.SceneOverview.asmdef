@@ -4,6 +4,7 @@
     "references": [
         "GameKit.Navigation",
         "GameKit.Navigation.VContainer",
+        "GameKit.Navigation.Components",
         "VContainer",
         "VitalRouter",
         "UniTask",
@@ -12,7 +13,9 @@
         "LitMotion",
         "GameKit.SceneLauncher.VContainer",
         "GameKit.Assets",
-        "GameKit.Common"
+        "GameKit.Common",
+        "R3.Unity",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
