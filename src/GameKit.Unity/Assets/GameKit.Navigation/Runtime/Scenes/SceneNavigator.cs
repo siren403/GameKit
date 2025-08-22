@@ -18,7 +18,6 @@ using VitalRouter;
 
 namespace GameKit.Navigation.Scenes
 {
-
     [Routes(CommandOrdering.Drop)]
     internal partial class SceneNavigator
     {
@@ -44,93 +43,24 @@ namespace GameKit.Navigation.Scenes
             var label = command.Label;
             var ct = context.CancellationToken;
 
-            ByteSize downloadSize = 0;
-            List<IResourceLocation> downloadLocations = new List<IResourceLocation>();
-
-            // Check label
+            var planResult = await ToScenePlanCommand.CreateUsingDownloadManifestAsync(label, ct: ct);
+            if (planResult.IsError)
             {
-                var sizeResult = await AddressableOperations.GetDownloadSizeAsync(label, ct);
-                if (sizeResult.IsError)
-                {
-                    // TODO: SceneErrorCommand
-                    Debug.LogError($"Failed to get download size for '{label}': {sizeResult}");
-                    return;
-                }
-
-                var (size, locations) = sizeResult.Value;
-
-                if (!locations.Any())
-                {
-                    // TODO: SceneErrorCommand
-                    Debug.LogWarning($"No locations found for '{label}'.");
-                    return;
-                }
-
-                downloadSize = size;
-                downloadLocations.AddRange(locations);
-                // TODO: ILogger<SceneNavigator>
-                Debug.Log($"valid label. '{label}': {size} bytes");
-                Debug.Log($"Locations: {string.Join(", ", downloadLocations.Select(loc => loc.PrimaryKey))}");
-            }
-
-            // Transition
-            // TODO: Add transition download size
-            int? transitionIndex = null;
-            {
-                var transitionLabel = $"{label}:transition";
-                IResourceLocation transitionLocation = null;
-                var transitionSizeResult = await AddressableOperations.GetDownloadSizeAsync(transitionLabel, ct);
-                if (!transitionSizeResult.IsError)
-                {
-                    transitionLocation = transitionSizeResult.Value.Item2.FirstOrDefault();
-                }
-
-                if (transitionLocation is null)
-                {
-                    transitionLabel = "/:transition";
-                    transitionSizeResult = await AddressableOperations.GetDownloadSizeAsync(transitionLabel, ct);
-                    if (!transitionSizeResult.IsError)
-                    {
-                        transitionLocation = transitionSizeResult.Value.Item2.FirstOrDefault();
-                    }
-                }
-
-                if (transitionLocation is not null)
-                {
-                    // TODO: ILogger<SceneNavigator>
-                    Debug.Log("Found transition label");
-                    downloadLocations.Add(transitionLocation);
-                    transitionIndex = downloadLocations.Count - 1;
-                }
+                Debug.LogError($"Failed to create ToScenePlanCommand: {planResult}");
+                return;
             }
 
             // TODO: ILogger<SceneNavigator>
-            Debug.Log($"Final Locations: {string.Join(", ", downloadLocations.Select(loc => loc.PrimaryKey))}");
+            Debug.Log($"Plan Manifest: {planResult.Value.Manifest}");
 
-            // Download
+            planResult = await ToScenePlanCommand.ToDownloadLocationsAsync(planResult.Value, ct: ct);
+            if (planResult.IsError)
             {
-                var downloadResult = await AddressableOperations.DownloadLocationsAsync(downloadLocations, ct);
-                if (downloadResult.IsError)
-                {
-                    // TODO: SceneErrorCommand
-                    Debug.LogError($"Failed to download locations for '{label}': {downloadResult}");
-                    return;
-                }
-
-                // TODO: ILogger<SceneNavigator>
-                Debug.Log($"Successfully downloaded locations for '{label}'.");
+                Debug.LogError($"Failed to download locations: {planResult}");
+                return;
             }
 
-            // Present
-            {
-                var plan = new ToScenePlanCommand(label, downloadLocations)
-                {
-                    DownloadSize = downloadSize,
-                    IsDownloaded = true,
-                    TransitionIndex = transitionIndex
-                };
-                await InternalToScenePlanAsync(plan, ct);
-            }
+            await InternalToScenePlanAsync(planResult.Value, ct);
         }
 
 
@@ -142,15 +72,15 @@ namespace GameKit.Navigation.Scenes
 
         private async UniTask InternalToScenePlanAsync(ToScenePlanCommand command, CancellationToken ct = default)
         {
-            var (label, locations, downloaded, transitionLocation) = command;
+            var (label, manifest, transitionLocation) = command;
             await _router.PublishAsync(new NavigationStartedCommand()
             {
                 Label = label
             }, ct);
 
-            if (!downloaded)
+            if (!manifest.IsDownloaded)
             {
-                var downloadResult = await AddressableOperations.DownloadLocationsAsync(locations, ct);
+                var downloadResult = await AddressableOperations.DownloadAsync(manifest, ct: ct);
                 if (downloadResult.IsError)
                 {
                     // TODO: SceneErrorCommand
@@ -170,6 +100,7 @@ namespace GameKit.Navigation.Scenes
                 {
                     await UnloadAsync();
                 }
+
                 _loadedLocation = string.Empty;
 
                 await LoadAsync();
@@ -209,9 +140,10 @@ namespace GameKit.Navigation.Scenes
             {
                 GetLoadedScenes(_loadedScenesCache);
                 _loadedSceneHandleCache.Clear();
-                foreach (IResourceLocation location in locations
-                    .Where(location => transitionLocation != location)
-                    .Where(location => location.ResourceType == typeof(SceneInstance)))
+                // TODO: 리팩토링 필요
+                foreach (IResourceLocation location in manifest.Locations
+                             .Where(location => transitionLocation != location)
+                             .Where(location => location.ResourceType == typeof(SceneInstance)))
                 {
                     string locationString = location.ToString();
                     if (_loadedScenesCache.Contains(locationString))

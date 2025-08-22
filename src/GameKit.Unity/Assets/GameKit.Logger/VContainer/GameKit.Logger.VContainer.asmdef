@@ -1,14 +1,9 @@
 {
-  "name": "GameKit.Navigation",
+  "name": "GameKit.Logger.VContainer",
   "rootNamespace": "",
   "references": [
-    "GameKit.Common",
-    "GameKit.Assets",
-    "GameKit.Logger",
-    "Unity.Addressables",
-    "Unity.ResourceManager",
-    "UniTask",
-    "VitalRouter"
+    "VContainer",
+    "GameKit.Logger"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -16,8 +11,15 @@
   "overrideReferences": false,
   "precompiledReferences": [],
   "autoReferenced": true,
-  "defineConstraints": [],
+  "defineConstraints": [
+    "USE_VCONTAINER"
+  ],
   "versionDefines": [
+    {
+      "name": "jp.hadashikick.vcontainer",
+      "expression": "",
+      "define": "USE_VCONTAINER"
+    }
   ],
   "noEngineReferences": false
 }

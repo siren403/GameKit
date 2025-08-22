@@ -1,0 +1,10 @@
+{
+  "name": "GameKit.Logger",
+  "versionDefines": [
+    {
+      "name": "com.cysharp.zlogger",
+      "expression": "",
+      "define": "USE_ZLOGGER"
+    }
+  ]
+}

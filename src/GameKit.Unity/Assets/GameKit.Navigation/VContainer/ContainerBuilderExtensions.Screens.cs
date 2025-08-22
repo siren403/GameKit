@@ -1,7 +1,7 @@
 ﻿using System;
+using GameKit.Logger.VContainer;
 using GameKit.Navigation.Screens.Page;
 using GameKit.Navigation.Screens.Page.Internal;
-using Microsoft.Extensions.Logging;
 using VContainer;
 using VContainer.Unity;
 using VitalRouter.VContainer;
@@ -28,9 +28,7 @@ namespace GameKit.Navigation.VContainer
                 presenter.Initialize(registry.CachedPages);
             });
 
-#if !USE_ZLOGGER
-            builder.Register(typeof(UnityLogger<>), Lifetime.Singleton).As(typeof(ILogger<>));
-#endif
+            builder.RegisterLogger();
         }
 
         public class PagesBuilder

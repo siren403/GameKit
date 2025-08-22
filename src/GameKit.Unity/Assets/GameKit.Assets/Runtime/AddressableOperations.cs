@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets.Extensions;
@@ -8,8 +9,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
-using Void = GameKit.Common.Results.Void;
 
 namespace GameKit.Assets
 {
@@ -23,13 +22,16 @@ namespace GameKit.Assets
             return snapshot;
         }
 
-        public static async UniTask<CatalogResult> CheckCatalog(CancellationToken ct = default)
+        public static async UniTask<FastResult<List<string>>> CheckCatalog(
+            CancellationToken ct = default)
         {
             var handle = Addressables.CheckForCatalogUpdates(false);
             var snapshot = await handle.CaptureWithRelease();
             if (snapshot.Status == AsyncOperationStatus.Succeeded)
             {
-                return snapshot;
+                return snapshot.Result.Any()
+                    ? FastResult<List<string>>.Fail("Catalog.UpToDate")
+                    : FastResult<List<string>>.Ok(snapshot.Result);
             }
 
             var ex = snapshot.OperationException;
@@ -51,7 +53,7 @@ namespace GameKit.Assets
                     Description = msg
                 },
             };
-            return error;
+            return FastResult<List<string>>.Fail(error);
         }
 
         public static async UniTask<FastResult<T>> InstantiateAsync<T>(
@@ -60,6 +62,11 @@ namespace GameKit.Assets
             bool instantiateInWorldSpace = false
         )
         {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return FastResult<T>.Fail("Download.InvalidKey");
+            }
+
             var handle = Addressables.InstantiateAsync(key, parent, instantiateInWorldSpace);
             var result = await handle.OrError();
             if (result.IsError(out FastResult<T> fail))
@@ -72,23 +79,28 @@ namespace GameKit.Assets
             return FastResult<T>.Ok(component);
         }
 
-        public static async UniTask<FastResult<(ByteSize, IList<IResourceLocation>)>> GetDownloadSizeAsync(
+        public static async UniTask<FastResult<DownloadManifest>> GetDownloadManifestAsync(
             string key,
             CancellationToken ct = default
         )
         {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return FastResult<DownloadManifest>.Fail("DownloadManifest.InvalidKey");
+            }
+
             // NOTE: fast 모드에서는 List, 아닐때는 [] 
             var locationsHandle = Addressables.LoadResourceLocationsAsync(key);
             var locationsResult = await locationsHandle.OrError();
-            if (locationsResult.IsError(out FastResult<(ByteSize, IList<IResourceLocation>)> fail))
+            if (locationsResult.IsError(out FastResult<DownloadManifest> fail))
             {
                 return fail;
             }
 
             var locations = locationsResult.Value;
-            if (locations is {Count: 0})
+            if (locations is { Count: 0 })
             {
-                return FastResult<(ByteSize, IList<IResourceLocation>)>.Fail("Download.EmptyLocations");
+                return FastResult<DownloadManifest>.Fail("DownloadManifest.EmptyLocations");
             }
 
             var sizeHandle = Addressables.GetDownloadSizeAsync(locations);
@@ -99,24 +111,27 @@ namespace GameKit.Assets
             }
 
             var size = sizeResult.Value;
-            return FastResult<(ByteSize, IList<IResourceLocation>)>.Ok((size, locations));
+            return FastResult<DownloadManifest>.Ok(new(size, locations));
         }
 
-        public static async UniTask<FastResult<Void>> DownloadLocationsAsync(
-            IList<IResourceLocation> locations,
-            CancellationToken ct = default,
-            IProgress<DownloadStatus> progress = null
+        public static async UniTask<FastResult<DownloadManifest>> DownloadAsync(
+            DownloadManifest manifest,
+            IProgress<DownloadStatus> progress = null,
+            CancellationToken ct = default
         )
         {
-            if (locations is {Count: 0})
-            {
-                return FastResult<Void>.Fail("Download.EmptyLocations");
-            }
-
-            var handle = Addressables.DownloadDependenciesAsync(locations);
+            var handle = Addressables.DownloadDependenciesAsync(manifest.Locations);
             var result = await handle.OrError(progress);
             handle.Release();
-            return result.IsError(out FastResult<Void> fail) ? fail : FastResult.Ok;
+            if (result.IsError(out FastResult<DownloadManifest> fail))
+            {
+                return fail;
+            }
+
+            return FastResult<DownloadManifest>.Ok(manifest with
+            {
+                Size = 0
+            });
         }
     }
 }

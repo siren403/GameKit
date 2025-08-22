@@ -8,7 +8,8 @@
         "UniTask",
         "GameKit.Assets",
         "Unity.Addressables",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "GameKit.Logger.VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

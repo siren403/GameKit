@@ -19,13 +19,6 @@ namespace GameKit.Navigation.Scenes
                 return;
             }
 
-            if (catalogResult.Value.Any())
-            {
-                // TODO: SceneErrorCommand
-                Debug.LogWarning("Catalog is up to date.");
-                return;
-            }
-
             Debug.Log("Successfully checked catalog.");
             await next(command, context);
         }
