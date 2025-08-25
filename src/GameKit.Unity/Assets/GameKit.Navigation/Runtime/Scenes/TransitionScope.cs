@@ -56,26 +56,31 @@ namespace GameKit.Navigation.Scenes
 
         public static async UniTask<TransitionScope> CreateAsync(
             string loadingLabel,
-            IResourceLocation location,
+            IResourceLocation? location,
             Router router,
             CancellationToken ct = default
         )
         {
-            var handle = Addressables.LoadSceneAsync(
-                location,
-                LoadSceneMode.Additive,
-                SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
-                false
-            );
-            await handle.Task.AsUniTask();
-            await handle.Result.ActivateAsync();
-
-            await router.PublishAsync(new TransitionStartedCommand()
+            if (location != null)
             {
-                Label = loadingLabel
-            }, ct);
+                var handle = Addressables.LoadSceneAsync(
+                    location,
+                    LoadSceneMode.Additive,
+                    SceneReleaseMode.ReleaseSceneWhenSceneUnloaded,
+                    false
+                );
+                await handle.Task.AsUniTask();
+                await handle.Result.ActivateAsync();
 
-            return new(loadingLabel, handle.Result, router);
+                await router.PublishAsync(new TransitionStartedCommand()
+                {
+                    Label = loadingLabel
+                }, ct);
+
+                return new(loadingLabel, handle.Result, router);
+            }
+
+            return new();
         }
 
         private TransitionScope(string loadingLabel, SceneInstance instance, Router router)
