@@ -59,7 +59,7 @@ namespace GameKit.Logger.VContainer
 
             public void Build()
             {
-                if (_builder.Exists(typeof(ILoggerFactory), findParentScopes: true))
+                if (_builder.Exists(typeof(ILoggerFactory), findParentScopes: true, includeInterfaceTypes: true))
                 {
 #if UNITY_EDITOR
                     Debug.LogWarning(

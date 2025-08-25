@@ -9,6 +9,9 @@ namespace GameKit.SceneLauncher.VContainer
     public static class SceneScopeInitializer
     {
         private static SceneInstallerResolver? _resolver;
+        private static bool? _isStartedFromMainScene = null;
+
+        public static bool IsStartedFromMainScene => _isStartedFromMainScene ?? false;
 
         public static void Initialize(SceneInstallerResolver? resolver)
         {
@@ -23,7 +26,11 @@ namespace GameKit.SceneLauncher.VContainer
             {
                 SceneManager.sceneLoaded += OnSceneLoaded;
             }
+
+            var activeScene = SceneManager.GetActiveScene();
+            _isStartedFromMainScene = activeScene.buildIndex == 0;
         }
+
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CheckMainScene()

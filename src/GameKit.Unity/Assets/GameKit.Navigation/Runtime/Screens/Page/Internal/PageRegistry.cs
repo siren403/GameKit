@@ -11,6 +11,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
     internal class PageRegistry : IDisposable
     {
         private readonly ILogger<PageRegistry> _logger;
+        private readonly string? _name;
 
         /// <summary>
         /// Id: IPage
@@ -24,9 +25,11 @@ namespace GameKit.Navigation.Screens.Page.Internal
 
         public IEnumerable<PageEntry> CachedPages => _cachedPages.Values;
 
-        public PageRegistry(ILogger<PageRegistry> logger)
+        public PageRegistry(ILogger<PageRegistry> logger, string? name = null)
         {
             _logger = logger;
+            _name = name;
+            Debug.Log($"PageRegistry({name}) created");
         }
 
         public void AddPage(string pageId, IPage page)

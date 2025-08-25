@@ -10,11 +10,11 @@ namespace GameKit.Navigation.VContainer
 {
     public static partial class ContainerBuilderExtensions
     {
-        public static void RegisterPages(this IContainerBuilder builder, Action<PagesBuilder> configuration)
+        public static void RegisterPages(this IContainerBuilder builder, Action<PagesBuilder> configuration, string name = null)
         {
-            builder.Register<PageRegistry>(Lifetime.Singleton);
-            builder.Register<PagePresenter>(Lifetime.Singleton);
-            builder.Register<PageStack>(Lifetime.Singleton);
+            builder.Register<PageRegistry>(Lifetime.Scoped).WithParameter(name);
+            builder.Register<PagePresenter>(Lifetime.Scoped);
+            builder.Register<PageStack>(Lifetime.Scoped);
 
             builder.RegisterVitalRouter(routing => routing.Map<PageNavigator>());
 
