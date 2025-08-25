@@ -28,7 +28,7 @@ namespace GameKit.Navigation.VContainer
                 presenter.Initialize(registry.CachedPages);
             });
 
-            builder.RegisterLogger();
+            builder.RegisterLogger(logger => { logger.UseDefaultSettings(); });
         }
 
         public class PagesBuilder

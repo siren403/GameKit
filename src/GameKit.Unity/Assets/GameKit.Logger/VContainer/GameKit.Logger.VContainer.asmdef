@@ -1,25 +1,31 @@
 {
-  "name": "GameKit.Logger.VContainer",
-  "rootNamespace": "",
-  "references": [
-    "VContainer",
-    "GameKit.Logger"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [
-    "USE_VCONTAINER"
-  ],
-  "versionDefines": [
-    {
-      "name": "jp.hadashikick.vcontainer",
-      "expression": "",
-      "define": "USE_VCONTAINER"
-    }
-  ],
-  "noEngineReferences": false
+    "name": "GameKit.Logger.VContainer",
+    "rootNamespace": "",
+    "references": [
+        "VContainer",
+        "GameKit.Logger",
+        "ZLogger.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "USE_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "USE_VCONTAINER"
+        },
+        {
+            "name": "com.cysharp.zlogger",
+            "expression": "",
+            "define": "USE_ZLOGGER"
+        }
+    ],
+    "noEngineReferences": false
 }
