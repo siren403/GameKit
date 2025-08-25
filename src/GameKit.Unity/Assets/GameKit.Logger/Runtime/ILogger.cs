@@ -1,7 +1,6 @@
-﻿#if !USE_ZLOGGER
-
-namespace Microsoft.Extensions.Logging
+﻿namespace Microsoft.Extensions.Logging
 {
+#if !USE_ZLOGGER
     using UnityEngine;
 
     public interface ILogger
@@ -30,6 +29,5 @@ namespace Microsoft.Extensions.Logging
             Debug.Log($"{typeof(TCategoryName).Name} | {string.Format(message, args)}");
         }
     }
-}
-
 #endif
+}
