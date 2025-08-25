@@ -20,7 +20,7 @@ namespace GameKit.Logger.VContainer
             }
 #else
             var logger = new ZLoggerBuilder(builder);
-            configuration.Invoke(logger);
+            configuration?.Invoke(logger);
             logger.Build();
 #endif
         }
