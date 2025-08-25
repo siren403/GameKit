@@ -116,6 +116,7 @@ namespace GameKit.Navigation.Scenes
                     await CleanupScenes();
                 }
 #endif
+                // TODO: 트랜지션 씬의 Router에만 이벤트 발생 처리
                 await using (await TransitionScope.CreateAsync(label, transitionLocation, _router, ct))
                 {
                     if (_loadedLocation != _options.Root)

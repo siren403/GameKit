@@ -37,6 +37,9 @@ namespace GameKit.Logger.VContainer
                 _builder = builder;
             }
 
+            /// <summary>
+            /// LogLevel.Trace, ZLoggerUnityDebug with plain text formatter (Timestamp, LogLevel, Category)
+            /// </summary>
             public void UseDefaultSettings()
             {
                 _loggingConfiguration = logging =>
@@ -57,7 +60,7 @@ namespace GameKit.Logger.VContainer
                 };
             }
 
-            public void Build()
+            internal void Build()
             {
                 if (_builder.Exists(typeof(ILoggerFactory), findParentScopes: true, includeInterfaceTypes: true))
                 {

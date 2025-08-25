@@ -201,5 +201,5 @@ sysinfo.txt
 /ServerData
 
 !/Assets/**/*.unitypackage
-/Assets/AddressableAssetsData/link.xml
-/Assets/AddressableAssetsData/link.xml.meta
+/Assets/AddressableAssetsData/**/link.xml
+/Assets/AddressableAssetsData/**/link.xml.meta
