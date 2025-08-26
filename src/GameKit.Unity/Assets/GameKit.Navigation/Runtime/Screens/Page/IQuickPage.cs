@@ -19,6 +19,12 @@ namespace GameKit.Navigation.Screens.Page
             Action<TState, TPage, IBindingContext> binding,
             CancellationToken ct = default
         );
+
+        UniTask PushAsync(
+            TProps props,
+            Action<TPage, IBindingContext> binding,
+            CancellationToken ct = default
+        );
     }
 
     public interface IBindingContext

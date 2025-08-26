@@ -90,6 +90,38 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }, cancellationToken: ct);
             }
         }
+
+        public async UniTask PushAsync(TProps props, Action<TPage, IBindingContext> binding,
+            CancellationToken ct = default)
+        {
+            var pageResult = await _registry.GetPageAsync(_pageId);
+            if (pageResult.IsError)
+            {
+                return;
+            }
+
+            var (_, page, _) = pageResult.Value;
+            if (page is not TPage typedPage)
+            {
+#if UNITY_EDITOR
+                Debug.LogError($"Page binding failed. page is not of type {typeof(TPage).Name}");
+#endif
+                return;
+            }
+
+            typedPage.Props = props;
+            _context.Initialize();
+            using (_context)
+            {
+                binding.Invoke(typedPage, _context);
+                await _router.PushPageAsync(_pageId, ct: ct);
+                await UniTask.WaitWhile((_presenter, _pageId), static state =>
+                {
+                    var (presenter, pageId) = state;
+                    return presenter.IsRendering(pageId);
+                }, cancellationToken: ct);
+            }
+        }
     }
 
     internal class BindingContext : IDisposable, IBindingContext
