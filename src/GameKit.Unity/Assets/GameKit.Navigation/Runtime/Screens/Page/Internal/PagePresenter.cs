@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Common.Results;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Errors;
+using UnityEngine;
+using Void = GameKit.Common.Results.Void;
 
 namespace GameKit.Navigation.Screens.Page.Internal
 {
@@ -21,12 +24,19 @@ namespace GameKit.Navigation.Screens.Page.Internal
             _rendering.Clear();
         }
 
+        /// <summary>
+        /// Show는 보이게 되는 처리 중 예외가 발생하면 비정상적으로
+        /// 보일 수도 있으므로 실패 후 안보이게 처리. 
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         public async UniTask<FastResult<Void>> ShowPageAsync(
             PageEntry entry,
             CancellationToken ct = default
         )
         {
-            var (id, _, router) = entry;
+            var (id, page, router) = entry;
             try
             {
                 await router.PublishAsync(new ShowCommand(), ct);
@@ -41,16 +51,35 @@ namespace GameKit.Navigation.Screens.Page.Internal
                     errorCode: PageErrorCodes.ShowFailed,
                     message: $"Failed to show page '{id}'"
                 ), ct);
+                page.IsVisible = false;
                 return FastResult<Void>.Fail(PageErrorCodes.ShowFailed, $"Failed to show page '{id}'");
             }
         }
 
-        public void HidePage(PageEntry entry)
+        /// <summary>
+        /// Hide는 안보이게 되는 상태이나 예외가 발생해도 최종적으로 안보이게 처리.
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <param name="ct"></param>
+        public async UniTask HidePage(PageEntry entry, CancellationToken ct = default)
         {
-            var (id, _, router) = entry;
+            var (id, page, router) = entry;
             if (_rendering.Remove(id))
             {
-                _ = router.PublishAsync(new HideCommand());
+                try
+                {
+                    await router.PublishAsync(new HideCommand(), ct);
+                }
+                catch (Exception e)
+                {
+                    page.IsVisible = false;
+                    _ = router.PublishAsync(new PageErrorCommand(
+                        pageId: id,
+                        operation: PageOperation.None,
+                        errorCode: PageErrorCodes.HideFailed,
+                        message: $"Failed to hide page '{id}': {e.Message}"
+                    ), ct);
+                }
             }
         }
 
