@@ -127,6 +127,13 @@ namespace GameKit.Navigation.Scenes.Commands
                 return fail;
             }
 
+            var manifest = catalogResult.Value;
+
+            if (manifest.HasUpdate)
+            {
+                return FastResult<ToScenePlanCommand>.Fail("Catalog.HasUpdate");
+            }
+
             var planResult = await CreateUsingDownloadManifestAsync(label, appendTransition, ct);
             if (planResult.IsError(out fail))
             {

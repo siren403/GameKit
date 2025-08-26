@@ -24,16 +24,19 @@ namespace GameKit.Assets
                 : FastResult<IResourceLocator>.Fail("Addressables.InitializeFailed");
         }
 
-        public static async UniTask<FastResult<List<string>>> CheckCatalog(
+        /// <summary>
+        /// TODO: CatalogManifest(keys, upToDate)
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public static async UniTask<FastResult<CatalogManifest>> CheckCatalog(
             CancellationToken ct = default)
         {
             var handle = Addressables.CheckForCatalogUpdates(false);
             var snapshot = await handle.CaptureWithRelease();
             if (snapshot.Status == AsyncOperationStatus.Succeeded)
             {
-                return snapshot.Result.Any()
-                    ? FastResult<List<string>>.Fail("Catalog.UpToDate")
-                    : FastResult<List<string>>.Ok(snapshot.Result);
+                return FastResult<CatalogManifest>.Ok(new CatalogManifest(snapshot.Result));
             }
 
             var ex = snapshot.OperationException;
@@ -55,7 +58,7 @@ namespace GameKit.Assets
                     Description = msg
                 },
             };
-            return FastResult<List<string>>.Fail(error);
+            return FastResult<CatalogManifest>.Fail(error);
         }
 
         public static async UniTask<FastResult<T>> InstantiateAsync<T>(

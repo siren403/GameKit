@@ -18,6 +18,13 @@ namespace GameKit.Navigation.Scenes
                 Debug.LogError($"Failed to check catalog: {catalogResult}");
                 return;
             }
+            
+            var manifest = catalogResult.Value;
+            if (manifest.HasUpdate)
+            {
+                Debug.LogWarning("There are updates available in the catalog. Please update the assets.");
+                return;
+            }
 
             Debug.Log("Successfully checked catalog.");
             await next(command, context);
