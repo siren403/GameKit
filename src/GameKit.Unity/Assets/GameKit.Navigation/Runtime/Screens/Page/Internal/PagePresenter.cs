@@ -61,7 +61,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
         /// </summary>
         /// <param name="entry"></param>
         /// <param name="ct"></param>
-        public async UniTask HidePage(PageEntry entry, CancellationToken ct = default)
+        public async UniTask HidePageAsync(PageEntry entry, CancellationToken ct = default)
         {
             var (id, page, router) = entry;
             if (_rendering.Remove(id))

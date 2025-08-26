@@ -86,7 +86,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }
 
                 var popPage = popPageResult.Value;
-                _presenter.HidePage(popPage);
+                _ = _presenter.HidePageAsync(popPage);
             }
 
             // 4. 새 페이지 표시 + Stack에 추가
@@ -118,7 +118,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }
 
                 var backPage = backPageResult.Value;
-                _presenter.HidePage(backPage);
+                _ = _presenter.HidePageAsync(backPage);
             }
             else
             {
@@ -199,7 +199,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }
 
                 var currentPage = currentPageResult.Value;
-                _presenter.HidePage(currentPage);
+                _presenter.HidePageAsync(currentPage);
             }
 
             var showResult = await _presenter.ShowPageAsync(newPage, context.CancellationToken);
@@ -249,7 +249,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }
 
                 var oldPage = oldPageResult.Value;
-                _presenter.HidePage(oldPage);
+                _presenter.HidePageAsync(oldPage);
             }
             else
             {
