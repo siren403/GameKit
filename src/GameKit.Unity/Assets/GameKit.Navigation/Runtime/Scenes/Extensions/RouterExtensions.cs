@@ -9,7 +9,7 @@ namespace GameKit.Navigation.Scenes.Extensions
 {
     public static class RouterExtensions
     {
-        public static void ToScene(this Router router, string label)
+        public static UniTaskVoid ToScene(this Router router, string label)
         {
             if (router == null)
             {
@@ -22,21 +22,7 @@ namespace GameKit.Navigation.Scenes.Extensions
             }
 
             router.PublishAsync(new ToSceneCommand { Label = label });
-        }
-
-        public static void ToScene(this Router router, ToScenePlanCommand command)
-        {
-            if (router == null)
-            {
-                throw new ArgumentNullException(nameof(router));
-            }
-
-            if (command.Label == null)
-            {
-                throw new ArgumentException("Label cannot be null.", nameof(command.Label));
-            }
-
-            router.PublishAsync(command);
+            return new UniTaskVoid();
         }
 
         public static ValueTask ToSceneAsync(this Router router, string label, CancellationToken ct = default)
