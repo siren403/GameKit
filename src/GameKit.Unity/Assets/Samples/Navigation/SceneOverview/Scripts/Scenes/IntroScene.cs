@@ -15,8 +15,8 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 //
                 pages.InHierarchy<InitPage>(nameof(InitPage));
                 pages.InHierarchy<DownloadPage>(nameof(DownloadPage));
-                pages.InHierarchy<ErrorPage>(nameof(ErrorPage));
-            });
+                pages.InHierarchy<ErrorPage, string>(nameof(ErrorPage));
+            }, nameof(IntroScene));
         }
     }
 }

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Navigation.Scenes.Commands;
 using GameKit.Navigation.Scenes.Extensions;
+using GameKit.Navigation.Screens.Page;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
 using R3;
@@ -24,15 +25,34 @@ namespace Samples.Navigation.SceneOverview.Scenes
     {
         private readonly Router _router;
         private readonly InitPage _initPage;
-        private readonly ErrorPage _errorPage;
+        private readonly IQuickPage<ErrorPage, string> _errorPage;
         private readonly DownloadPage _downloadPage;
 
-        public IntroEntryPoint(Router router, InitPage initPage, ErrorPage errorPage, DownloadPage downloadPage)
+        public IntroEntryPoint(
+            Router router,
+            InitPage initPage,
+            IQuickPage<ErrorPage, string> errorPage,
+            DownloadPage downloadPage
+        )
         {
             _router = router;
             _initPage = initPage;
             _errorPage = errorPage;
             _downloadPage = downloadPage;
+        }
+
+        private void PushErrorPage(string message)
+        {
+            _errorPage.PushAsync(message, _router, static (router, page, context) =>
+            {
+                context.OnBack(page.OnClickBack);
+                context.OnClick(page.OnClickCopy, async static (msg, ct) =>
+                {
+                    Debug.Log(msg);
+                    GUIUtility.systemCopyBuffer = msg;
+                    await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: ct);
+                });
+            });
         }
 
         public void Initialize()
@@ -59,7 +79,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 var planResult = await planTask;
                 if (planResult.IsError)
                 {
-                    PushErrorPage(planResult.ToString());
+                    PushErrorPage(catalogResult.ToString());
                     return;
                 }
 
@@ -74,18 +94,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 }
             }, AwaitOperation.Drop);
 
-            _errorPage.OnClickBack.SubscribeAwait(
-                async (_, ct) => { await _router.BackPageAsync(ct); },
-                AwaitOperation.Drop
-            );
-
             return;
-
-            void PushErrorPage(string message)
-            {
-                _errorPage.Message = message;
-                _router.PushPage(nameof(ErrorPage));
-            }
 
             async UniTaskVoid ToDownloadPage(ToScenePlanCommand command)
             {
@@ -111,7 +120,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
             void NextScene(ToScenePlanCommand command)
             {
-                _router.ToScene(command);
+                _router.PublishAsync(command);
             }
         }
 

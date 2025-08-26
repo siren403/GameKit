@@ -10,7 +10,8 @@ namespace GameKit.Navigation.VContainer
 {
     public static partial class ContainerBuilderExtensions
     {
-        public static void RegisterPages(this IContainerBuilder builder, Action<PagesBuilder> configuration, string name = null)
+        public static void RegisterPages(this IContainerBuilder builder, Action<PagesBuilder> configuration,
+            string name = null)
         {
             builder.Register<PageRegistry>(Lifetime.Scoped).WithParameter(name);
             builder.Register<PagePresenter>(Lifetime.Scoped);
@@ -89,6 +90,14 @@ namespace GameKit.Navigation.VContainer
                     var page = container.Resolve<T>();
                     registry.AddPage(id, page);
                 });
+            }
+
+            public void InHierarchy<TPage, TProps>(string id) where TPage : IPage, IPageProps<TProps>
+            {
+                InHierarchy<TPage>(id);
+                _builder.Register<QuickPage<TPage, TProps>>(Lifetime.Singleton)
+                    .As<IQuickPage<TPage, TProps>>()
+                    .WithParameter(id);
             }
 
             public void InAddressable<T>(string id, string key) where T : IPage

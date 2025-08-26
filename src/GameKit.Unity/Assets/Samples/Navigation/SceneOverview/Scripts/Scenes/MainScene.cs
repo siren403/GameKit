@@ -64,15 +64,15 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
         public async UniTask StartAsync(CancellationToken cancellation = new CancellationToken())
         {
-            var fromMainScene = SceneManager.GetActiveScene().buildIndex == 0;
-            if (fromMainScene)
+            if (SceneScopeInitializer.IsStartedFromMainScene)
             {
                 await _router.PublishAsync(new ToSceneCommand()
                 {
                     Label = "/intro"
                 }, cancellation);
-                await _fade.OutAsync(ct: cancellation);
             }
+
+            await _fade.OutAsync(ct: cancellation);
         }
     }
 }
