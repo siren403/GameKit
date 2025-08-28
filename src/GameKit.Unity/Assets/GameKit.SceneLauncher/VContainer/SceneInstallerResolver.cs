@@ -10,7 +10,7 @@ namespace GameKit.SceneLauncher.VContainer
 {
     public class SceneInstallerResolver
     {
-        private static readonly Dictionary<string, IInstaller> _installers = new();
+        private readonly Dictionary<string, IInstaller> _installers = new();
 
         public IInstaller Resolve(Scene scene)
         {
@@ -26,6 +26,8 @@ namespace GameKit.SceneLauncher.VContainer
         {
             Assert.IsFalse(string.IsNullOrWhiteSpace(path));
             Assert.IsNotNull(installer);
+            Assert.IsFalse(_installers.ContainsKey(path),
+                $"The installer for the scene '{path}' is already registered.");
             _installers[path] = installer;
         }
     }

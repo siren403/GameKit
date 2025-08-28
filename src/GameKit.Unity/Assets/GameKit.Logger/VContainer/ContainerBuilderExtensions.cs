@@ -44,10 +44,13 @@ namespace GameKit.Logger.VContainer
             {
                 _loggingConfiguration = logging =>
                 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     logging.SetMinimumLevel(LogLevel.Trace);
-// #if UNITY_EDITOR
+#else
+                    logging.SetMinimumLevel(LogLevel.Information);
+                    // 릴리즈에서는 파일 로깅만 사용
                     // logging.AddZLoggerRollingFile((dt, index) => $"Logs/{dt:yyyy-MM-dd}_{index}.log", 1024 * 1024);
-// #endif
+#endif
                     logging.AddZLoggerUnityDebug(options =>
                     {
                         options.UsePlainTextFormatter(formatter =>

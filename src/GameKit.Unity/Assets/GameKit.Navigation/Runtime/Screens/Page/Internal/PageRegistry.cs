@@ -29,7 +29,9 @@ namespace GameKit.Navigation.Screens.Page.Internal
         {
             _logger = logger;
             _name = name;
+#if UNITY_EDITOR
             Debug.Log($"PageRegistry({name}) created");
+#endif
         }
 
         public void AddPage(string pageId, IPage page)
