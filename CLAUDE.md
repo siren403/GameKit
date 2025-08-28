@@ -83,6 +83,7 @@ GameKit은 모듈별 개별 패키지와 메타 패키지를 제공하는 하이
 - **VitalRouter 1.7.0** - 메시지 라우팅 및 커맨드 패턴 구현
 - **LitMotion 2.0.1** - 고성능 애니메이션 라이브러리
 - **Unity Addressables 2.6.0** - 에셋 관리 시스템
+- **ZLogger** - 고성능 구조화 로깅 라이브러리
 - **Ulid** - 고유 식별자 생성 라이브러리 (GameSessions에서 사용)
 
 ## 주요 아키텍처 패턴
@@ -125,7 +126,10 @@ VContainer가 모듈 전반에 걸쳐 의존성 주입에 사용됩니다:
 
 ### 조건부 컴파일 정의
 - **USE_VCONTAINER**: VContainer가 설치된 경우 자동 정의, VContainer 통합 코드 활성화
-- **USE_ZLOGGER**: ZLogger 패키지가 설치된 경우 선택적 로깅 기능 활성화
+
+### 로깅 시스템
+- **ZLogger 직접 사용**: 현재 프로젝트는 ZLogger를 직접 사용하여 로깅 기능 제공
+- **GameKit.Logger 모듈**: ZLogger 기반의 통합 로깅 기능 확장 시 재구성 예정
 
 ## 네비게이션 시스템 아키텍처
 
@@ -213,7 +217,7 @@ var user = await mediator.ExecuteAsync<GetUserCommand, User>(new GetUserCommand 
 ### 에러 처리
 - 예상되는 에러에 대해 예외 던지기 대신 Result 패턴 사용
 - 의미 있는 에러 코드와 설명 제공
-- Microsoft.Extensions.Logging 추상화를 사용하여 적절하게 에러 로깅
+- ZLogger를 사용하여 구조화된 로깅 수행
 
 ### Git 커밋 메시지 규칙
 GameKit 프로젝트는 [Conventional Commits](https://www.conventionalcommits.org/) 형식을 따릅니다.

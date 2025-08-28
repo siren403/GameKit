@@ -20,6 +20,13 @@
       },
       "hash": "79e1b02d7df49d55721e427bf41a7b655c675462"
     },
+    "com.cysharp.csprojmodifier": {
+      "version": "https://github.com/Cysharp/CsprojModifier.git?path=src/CsprojModifier/Assets/CsprojModifier#1.3.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "ae633b0cc98208d07e65ac2d9aabb246c7200ebe"
+    },
     "com.cysharp.r3": {
       "version": "https://github.com/Cysharp/R3.git?path=src/R3.Unity/Assets/R3.Unity#1.0.0",
       "depth": 0,
@@ -35,6 +42,13 @@
       "source": "git",
       "dependencies": {},
       "hash": "7c0f199fe0d3fc528024488ccd671e6c7b27745b"
+    },
+    "com.cysharp.zlogger": {
+      "version": "https://github.com/Cysharp/ZLogger.git?path=src/ZLogger.Unity/Assets/ZLogger.Unity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "828a051ed81e561387c3db56ef3368d1716893b2"
     },
     "com.github-glitchenzo.nugetforunity": {
       "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity#v4.5.0",

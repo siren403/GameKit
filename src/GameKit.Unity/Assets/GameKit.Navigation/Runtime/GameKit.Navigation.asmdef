@@ -1,23 +1,21 @@
 {
-  "name": "GameKit.Navigation",
-  "rootNamespace": "",
-  "references": [
-    "GameKit.Common",
-    "GameKit.Assets",
-    "GameKit.Logger",
-    "Unity.Addressables",
-    "Unity.ResourceManager",
-    "UniTask",
-    "VitalRouter"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [
-  ],
-  "noEngineReferences": false
+    "name": "GameKit.Navigation",
+    "rootNamespace": "",
+    "references": [
+        "GameKit.Common",
+        "GameKit.Assets",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UniTask",
+        "VitalRouter"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

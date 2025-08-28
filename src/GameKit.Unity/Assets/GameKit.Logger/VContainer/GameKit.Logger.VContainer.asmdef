@@ -3,7 +3,6 @@
     "rootNamespace": "",
     "references": [
         "VContainer",
-        "GameKit.Logger",
         "ZLogger.Unity"
     ],
     "includePlatforms": [],
@@ -20,11 +19,6 @@
             "name": "jp.hadashikick.vcontainer",
             "expression": "",
             "define": "USE_VCONTAINER"
-        },
-        {
-            "name": "com.cysharp.zlogger",
-            "expression": "",
-            "define": "USE_ZLOGGER"
         }
     ],
     "noEngineReferences": false

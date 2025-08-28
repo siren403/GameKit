@@ -22,11 +22,6 @@
     ],
     "versionDefines": [
         {
-            "name": "com.cysharp.zlogger",
-            "expression": "",
-            "define": "USE_ZLOGGER"
-        },
-        {
             "name": "jp.hadashikick.vcontainer",
             "expression": "",
             "define": "USE_VCONTAINER"
