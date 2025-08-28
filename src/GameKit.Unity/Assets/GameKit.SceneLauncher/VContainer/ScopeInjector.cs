@@ -14,6 +14,9 @@ namespace GameKit.SceneLauncher.VContainer
             var gameObject = new GameObject(name);
             gameObject.SetActive(false);
             var newScope = gameObject.AddComponent<T>();
+#if UNITY_EDITOR
+            Debug.Log($"Using extra installer. {extraInstaller.GetType().FullName}");
+#endif
             newScope.ExtraInstaller = extraInstaller;
             SceneManager.MoveGameObjectToScene(gameObject, scene);
             gameObject.SetActive(true);
