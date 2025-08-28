@@ -10,11 +10,27 @@ namespace GameKit.SceneLauncher.VContainer
 {
     public class SceneInstallerResolver
     {
-        private readonly Dictionary<string, IInstaller> _installers = new();
+        private readonly Dictionary<string, IInstaller> _nameInstallers = new();
+        private readonly Dictionary<int, IInstaller> _buildIndexInstallers = new();
+
+        public SceneInstallerResolver(IInstaller main)
+        {
+            RegisterBuiltIn(0, main);
+        }
+
+        private SceneInstallerResolver()
+        {
+            throw new System.InvalidOperationException("Default constructor is not allowed.");
+        }
 
         public IInstaller Resolve(Scene scene)
         {
-            if (_installers.TryGetValue(scene.path, out var installer))
+            if (_buildIndexInstallers.TryGetValue(scene.buildIndex, out var installer))
+            {
+                return installer;
+            }
+
+            if (_nameInstallers.TryGetValue(scene.name, out installer))
             {
                 return installer;
             }
@@ -22,13 +38,22 @@ namespace GameKit.SceneLauncher.VContainer
             return UnitInstaller.Instance;
         }
 
-        public void Register(string path, IInstaller installer)
+        public void RegisterBuiltIn(int buildIndex, IInstaller installer)
         {
-            Assert.IsFalse(string.IsNullOrWhiteSpace(path));
+            Assert.IsTrue(buildIndex >= 0);
             Assert.IsNotNull(installer);
-            Assert.IsFalse(_installers.ContainsKey(path),
-                $"The installer for the scene '{path}' is already registered.");
-            _installers[path] = installer;
+            Assert.IsFalse(_buildIndexInstallers.ContainsKey(buildIndex),
+                $"The installer for the scene with build index '{buildIndex}' is already registered.");
+            _buildIndexInstallers[buildIndex] = installer;
+        }
+
+        public void RegisterName(string name, IInstaller installer)
+        {
+            Assert.IsFalse(string.IsNullOrWhiteSpace(name));
+            Assert.IsNotNull(installer);
+            Assert.IsFalse(_nameInstallers.ContainsKey(name),
+                $"The installer for the scene '{name}' is already registered.");
+            _nameInstallers[name] = installer;
         }
     }
 }

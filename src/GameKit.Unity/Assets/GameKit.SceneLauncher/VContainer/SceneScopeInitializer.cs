@@ -82,11 +82,10 @@ namespace GameKit.SceneLauncher.VContainer
             bool isMainScene = scene.buildIndex == 0;
             if (isMainScene)
             {
-                var installer = _resolver.Resolve(scene);
                 ScopeInjector.CreateScope<StartupLifetimeScope>(
                     scene,
                     nameof(StartupLifetimeScope),
-                    installer
+                    _resolver.Resolve(scene)
                 );
                 SceneManager.SetActiveScene(scene);
                 _mainSceneLoadedSource?.TrySetResult();
