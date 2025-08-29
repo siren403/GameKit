@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core;
+using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Errors;
 using GameKit.Navigation.Screens.Page.Internal;
@@ -49,7 +51,7 @@ namespace GameKit.Navigation.Tests.Screens
 
             var router = container.Resolve<Router>();
             var navigator = container.Resolve<PageNavigator>();
-            var stack = container.Resolve<PageStack>();
+            var stack = container.Resolve<ScreenStack>();
 
             // 스택이 비어있는지 확인
             Assert.IsFalse(stack.TryPeek(out _), "스택은 처음에 비어있어야 함");
@@ -82,7 +84,7 @@ namespace GameKit.Navigation.Tests.Screens
 
             var router = container.Resolve<Router>();
             var navigator = container.Resolve<PageNavigator>();
-            var stack = container.Resolve<PageStack>();
+            var stack = container.Resolve<ScreenStack>();
 
             // 여러 페이지를 Push로 쌓기
             await router.ToPageAsync(page1.Id);
@@ -146,7 +148,7 @@ namespace GameKit.Navigation.Tests.Screens
             Assert.IsNotNull(receivedError);
             Assert.AreEqual(MockPage.Login, receivedError.Value.PageId);
             Assert.AreEqual(PageOperation.None, receivedError.Value.Operation);
-            Assert.AreEqual(PageErrorCodes.AlreadyCurrent, receivedError.Value.ErrorCode);
+            Assert.AreEqual(ScreenErrorCodes.AlreadyCurrent, receivedError.Value.ErrorCode);
             Assert.That(receivedError.Value.Message, Does.Contain("Already on page"));
         });
 
@@ -179,7 +181,7 @@ namespace GameKit.Navigation.Tests.Screens
             Assert.IsNotNull(receivedError);
             Assert.AreEqual("NonExistentPage", receivedError.Value.PageId);
             Assert.AreEqual(PageOperation.To, receivedError.Value.Operation);
-            Assert.AreEqual(PageErrorCodes.NotFound, receivedError.Value.ErrorCode);
+            Assert.AreEqual(ScreenErrorCodes.NotFound, receivedError.Value.ErrorCode);
             Assert.That(receivedError.Value.Message, Does.Contain("not found"));
         });
 
@@ -198,7 +200,7 @@ namespace GameKit.Navigation.Tests.Screens
 
             var navigator = container.Resolve<PageNavigator>();
             var router = container.Resolve<Router>();
-            var stack = container.Resolve<PageStack>();
+            var stack = container.Resolve<ScreenStack>();
 
             // Act - Show 시 예외가 발생하는 페이지로 이동
             await router.ToPageAsync(failingPage.Id);
@@ -214,7 +216,7 @@ namespace GameKit.Navigation.Tests.Screens
             // PageErrorCommand가 발생했는지 확인
             Assert.AreEqual(failingPage.Id, failingPage.PageError.PageId);
             Assert.AreEqual(PageOperation.None, failingPage.PageError.Operation);
-            Assert.AreEqual(PageErrorCodes.ShowFailed, failingPage.PageError.ErrorCode);
+            Assert.AreEqual(ScreenErrorCodes.ShowFailed, failingPage.PageError.ErrorCode);
         });
 
         #endregion
@@ -238,7 +240,7 @@ namespace GameKit.Navigation.Tests.Screens
             var container = builder.Build();
 
             var router = container.Resolve<Router>();
-            var stack = container.Resolve<PageStack>();
+            var stack = container.Resolve<ScreenStack>();
 
             // 초기 상태: 빈 스택
             Assert.IsFalse(stack.TryPeek(out _), "초기에는 빈 스택");
@@ -325,13 +327,13 @@ namespace GameKit.Navigation.Tests.Screens
 
             var router = container.Resolve<Router>();
             var navigator = container.Resolve<PageNavigator>();
-            var stack = container.Resolve<PageStack>();
+            var stack = container.Resolve<ScreenStack>();
 
             using var cts = new CancellationTokenSource();
 
             // Act - 작업 시작 후 즉시 취소
             var task = router.ToPageAsync(slowPage.Id, cts.Token);
-            await UniTask.DelayFrame(1);
+            await UniTask.DelayFrame(1, cancellationToken: cts.Token);
             cts.Cancel();
 
             try

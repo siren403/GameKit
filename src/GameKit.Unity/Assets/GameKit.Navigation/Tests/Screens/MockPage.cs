@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core.Commands;
 using GameKit.Navigation.Screens.Page;
-using GameKit.Navigation.Screens.Page.Commands;
 using UnityEngine;
 using VitalRouter;
 

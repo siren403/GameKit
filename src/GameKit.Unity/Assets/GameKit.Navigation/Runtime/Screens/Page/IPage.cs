@@ -1,10 +1,8 @@
-﻿using VitalRouter;
+﻿using GameKit.Navigation.Screens.Core;
 
 namespace GameKit.Navigation.Screens.Page
 {
-    public interface IPage
+    public interface IPage : IScreen
     {
-        bool IsVisible { set; get; }
-        Subscription MapTo(ICommandSubscribable subscribable);
     }
 }

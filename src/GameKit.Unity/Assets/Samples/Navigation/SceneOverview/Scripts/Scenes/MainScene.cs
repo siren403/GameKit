@@ -17,20 +17,14 @@ namespace Samples.Navigation.SceneOverview.Scenes
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Initialize()
         {
-            var resolver = new SceneInstallerResolver();
-            const string sampleMainScenePath = "Assets/Samples/Navigation/SceneOverview/Scenes/MainScene.unity";
-            resolver.Register(sampleMainScenePath, new MainScene());
+            var resolver = new SceneInstallerResolver(new MainScene());
+            resolver.RegisterBuiltIn(1, new IntroScene());
 
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/FadeScene.unity",
-                new FadeScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/InitializeScene.unity",
-                new InitializeScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/IntroScene.unity",
-                new IntroScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Local/TransitionScene.unity",
-                new TransitionScene());
-            resolver.Register("Assets/Samples/Navigation/SceneOverview/Scenes/Remote/TitleScene.unity",
-                new TitleScene());
+            resolver.RegisterName("FadeScene", new FadeScene());
+            resolver.RegisterName("InitializeScene", new InitializeScene());
+            resolver.RegisterName("TransitionScene", new TransitionScene());
+            resolver.RegisterName("TitleScene", new TitleScene());
+            
             SceneScopeInitializer.Initialize(resolver);
         }
 
