@@ -1,19 +1,17 @@
 using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Navigation.Scenes.Commands;
-using GameKit.Navigation.Scenes.Extensions;
+using GameKit.Navigation.Screens.Dialog.Commands;
 using GameKit.Navigation.Screens.Page;
-using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
 using R3;
+using Samples.Navigation.SceneOverview.Dialogs;
 using Samples.Navigation.SceneOverview.Pages;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer.Unity;
 using VitalRouter;
-using VitalRouter.R3;
 
 namespace Samples.Navigation.SceneOverview.Scenes
 {
@@ -27,18 +25,21 @@ namespace Samples.Navigation.SceneOverview.Scenes
         private readonly InitPage _initPage;
         private readonly IQuickPage<ErrorPage, string> _errorPage;
         private readonly DownloadPage _downloadPage;
+        private readonly ConfirmDialog _confirmDialog;
 
         public IntroEntryPoint(
             Router router,
             InitPage initPage,
             IQuickPage<ErrorPage, string> errorPage,
-            DownloadPage downloadPage
+            DownloadPage downloadPage,
+            ConfirmDialog confirmDialog
         )
         {
             _router = router;
             _initPage = initPage;
             _errorPage = errorPage;
             _downloadPage = downloadPage;
+            _confirmDialog = confirmDialog;
         }
 
         private void PushErrorPage(string message)
@@ -59,6 +60,22 @@ namespace Samples.Navigation.SceneOverview.Scenes
         {
             _initPage.OnClickInit.SubscribeAwait(async (_, ct) =>
             {
+                _confirmDialog.Message = "Start initialization?";
+
+                await _router.PublishAsync(new ShowDialogCommand(nameof(ConfirmDialog)), ct);
+                var dialogResult = await Observable.Merge(
+                    _confirmDialog.OnClickConfirm.Select(_ => 1),
+                    _confirmDialog.OnClickCancel.Select(_ => 0),
+                    _confirmDialog.OnClickScrim.Select(_ => 0)
+                ).FirstAsync(cancellationToken: ct);
+
+                await _router.PublishAsync(new HideDialogCommand(), ct);
+                if (dialogResult == 0)
+                {
+                    Debug.Log("Initialization cancelled by user.");
+                    return;
+                }
+
                 Debug.Log("Initializing Addressables...");
                 var initResult = await AddressableOperations.InitializeAsync(ct);
                 if (initResult.IsError)

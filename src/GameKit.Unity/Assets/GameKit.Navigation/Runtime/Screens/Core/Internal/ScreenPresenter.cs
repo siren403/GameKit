@@ -3,20 +3,18 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Common.Results;
-using GameKit.Navigation.Screens.Page.Commands;
-using GameKit.Navigation.Screens.Page.Errors;
-using UnityEngine;
+using GameKit.Navigation.Screens.Core.Commands;
 using Void = GameKit.Common.Results.Void;
 
-namespace GameKit.Navigation.Screens.Page.Internal
+namespace GameKit.Navigation.Screens.Core.Internal
 {
-    internal class PagePresenter
+    internal class ScreenPresenter<TScreen> where TScreen : IScreen
     {
         private readonly HashSet<string> _rendering = new();
 
-        public void Initialize(IEnumerable<PageEntry> pages)
+        public void Initialize(IEnumerable<ScreenEntry<TScreen>> screens)
         {
-            foreach (var (_, page, _) in pages)
+            foreach (var (_, page, _) in screens)
             {
                 page.IsVisible = false;
             }
@@ -31,39 +29,43 @@ namespace GameKit.Navigation.Screens.Page.Internal
         /// <param name="entry"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public async UniTask<FastResult<Void>> ShowPageAsync(
-            PageEntry entry,
+        public async UniTask<FastResult<Void>> ShowScreenAsync(
+            ScreenEntry<TScreen> entry,
             CancellationToken ct = default
         )
         {
-            var (id, page, router) = entry;
+            var (id, screen, router) = entry;
             try
             {
                 await router.PublishAsync(new ShowCommand(), ct);
                 _rendering.Add(id);
                 return FastResult.Ok;
             }
-            catch
+            catch (Exception e)
             {
-                _ = router.PublishAsync(new PageErrorCommand(
-                    pageId: id,
-                    operation: PageOperation.None,
-                    errorCode: PageErrorCodes.ShowFailed,
-                    message: $"Failed to show page '{id}'"
+                screen.IsVisible = false;
+                _ = router.PublishAsync(new ScreenErrorCommand(
+                    id,
+                    ScreenOperation.Show,
+                    ScreenErrorCodes.ShowFailed,
+                    $"Exception during showing screen: {e.Message}"
                 ), ct);
-                page.IsVisible = false;
-                return FastResult<Void>.Fail(PageErrorCodes.ShowFailed, $"Failed to show page '{id}'");
+                return FastResult<Void>.Fail(
+                    ScreenErrorCodes.ShowFailed,
+                    $"Exception during showing screen: {e.Message}"
+                );
             }
         }
+
 
         /// <summary>
         /// Hide는 안보이게 되는 상태이나 예외가 발생해도 최종적으로 안보이게 처리.
         /// </summary>
         /// <param name="entry"></param>
         /// <param name="ct"></param>
-        public async UniTask HidePageAsync(PageEntry entry, CancellationToken ct = default)
+        public async UniTask HideScreenAsync(ScreenEntry<TScreen> entry, CancellationToken ct = default)
         {
-            var (id, page, router) = entry;
+            var (id, screen, router) = entry;
             if (_rendering.Remove(id))
             {
                 try
@@ -72,12 +74,12 @@ namespace GameKit.Navigation.Screens.Page.Internal
                 }
                 catch (Exception e)
                 {
-                    page.IsVisible = false;
-                    _ = router.PublishAsync(new PageErrorCommand(
-                        pageId: id,
-                        operation: PageOperation.None,
-                        errorCode: PageErrorCodes.HideFailed,
-                        message: $"Failed to hide page '{id}': {e.Message}"
+                    screen.IsVisible = false;
+                    _ = router.PublishAsync(new ScreenErrorCommand(
+                        id,
+                        ScreenOperation.Hide,
+                        ScreenErrorCodes.HideFailed,
+                        $"Exception during hiding screen: {e.Message}"
                     ), ct);
                 }
             }

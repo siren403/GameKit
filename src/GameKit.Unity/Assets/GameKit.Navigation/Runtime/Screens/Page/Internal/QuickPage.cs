@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Page.Extensions;
 using R3;
 using UnityEngine;
@@ -15,15 +16,15 @@ namespace GameKit.Navigation.Screens.Page.Internal
     {
         private readonly Router _router;
         private readonly string _pageId;
-        private readonly PageRegistry _registry;
-        private readonly PagePresenter _presenter;
+        private readonly ScreenRegistry<IPage> _registry;
+        private readonly ScreenPresenter<IPage> _presenter;
         private readonly BindingContext _context;
 
         public QuickPage(
             Router router,
             string pageId,
-            PageRegistry registry,
-            PagePresenter presenter
+            ScreenRegistry<IPage> registry,
+            ScreenPresenter<IPage> presenter
         )
         {
             _router = router;
@@ -35,7 +36,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
 
         public async UniTask PushAsync(TProps props, CancellationToken ct = default)
         {
-            var pageResult = await _registry.GetPageAsync(_pageId);
+            var pageResult = await _registry.GetScreenAsync(_pageId);
             if (pageResult.IsError)
             {
                 return;
@@ -62,7 +63,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
             CancellationToken ct = default
         )
         {
-            var pageResult = await _registry.GetPageAsync(_pageId);
+            var pageResult = await _registry.GetScreenAsync(_pageId);
             if (pageResult.IsError)
             {
                 return;
@@ -94,7 +95,7 @@ namespace GameKit.Navigation.Screens.Page.Internal
         public async UniTask PushAsync(TProps props, Action<TPage, IBindingContext> binding,
             CancellationToken ct = default)
         {
-            var pageResult = await _registry.GetPageAsync(_pageId);
+            var pageResult = await _registry.GetScreenAsync(_pageId);
             if (pageResult.IsError)
             {
                 return;

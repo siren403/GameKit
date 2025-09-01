@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Errors;
 using Microsoft.Extensions.Logging;
@@ -7,70 +8,49 @@ using VitalRouter;
 namespace GameKit.Navigation.Screens.Page.Internal
 {
     [Routes(CommandOrdering.Drop)]
-    internal partial class PageNavigator
+    internal sealed partial class PageNavigator
     {
-        private readonly PagePresenter _presenter;
-        private readonly PageStack _stack;
-        private readonly PageRegistry _registry;
+        private readonly ScreenPresenter<IPage> _presenter;
+        private readonly ScreenRegistry<IPage> _registry;
         private readonly Router _router;
         private readonly ILogger<PageNavigator> _logger;
 
+        private readonly PageStack _stack;
+
         public PageNavigator(
-            PagePresenter presenter,
-            PageStack stack,
-            PageRegistry registry,
+            ScreenPresenter<IPage> presenter,
+            ScreenRegistry<IPage> registry,
             Router router,
-            ILogger<PageNavigator> logger
+            ILogger<PageNavigator> logger,
+            PageStack stack
         )
         {
             _presenter = presenter;
-            _stack = stack;
             _registry = registry;
             _router = router;
             _logger = logger;
+            _stack = stack;
         }
 
         public bool IsCurrentPage(string pageId)
         {
-            return _presenter.IsRendering(pageId) && AlreadyCurrentPage(pageId);
+            return _presenter.IsRendering(pageId) && _stack.AlreadyCurrentScreen(pageId, _router);
         }
 
-        private bool AlreadyCurrentPage(string pageId)
-        {
-            var result = _stack.TryPeek(out var currentPageId) && currentPageId == pageId;
-
-            if (result)
-            {
-                _ = _router.PublishAsync(new PageErrorCommand(
-                    pageId: pageId,
-                    operation: PageOperation.None,
-                    errorCode: PageErrorCodes.AlreadyCurrent,
-                    message: $"Already on page '{pageId}'"
-                ));
-            }
-
-            return result;
-        }
 
         [Route]
         private async UniTask On(ToPageCommand command, PublishContext context)
         {
             var newPageId = command.PageId;
             // 1. 중복 체크 (Navigator가 Stack 상태 확인)
-            if (AlreadyCurrentPage(newPageId))
+            if (_stack.AlreadyCurrentScreen(newPageId, _router))
             {
                 return;
             }
 
-            var newPageResult = await _registry.GetPageAsync(newPageId);
+            var newPageResult = await _registry.GetScreenWithErrorAsync(newPageId, _router);
             if (newPageResult.IsError)
             {
-                _ = _router.PublishAsync(new PageErrorCommand(
-                    pageId: newPageId,
-                    operation: PageOperation.To,
-                    errorCode: PageErrorCodes.NotFound,
-                    message: $"Page '{newPageId}' not found.\nReason: {newPageResult.FirstError}"
-                ));
                 return;
             }
 
@@ -79,18 +59,18 @@ namespace GameKit.Navigation.Screens.Page.Internal
             // 3. 모든 기존 페이지 숨기기 + Stack 조작
             while (_stack.TryPop(out var id))
             {
-                var popPageResult = await _registry.GetPageAsync(id);
+                var popPageResult = await _registry.GetScreenAsync(id);
                 if (popPageResult.IsError)
                 {
                     continue;
                 }
 
                 var popPage = popPageResult.Value;
-                _ = _presenter.HidePageAsync(popPage);
+                _ = _presenter.HideScreenAsync(popPage);
             }
 
             // 4. 새 페이지 표시 + Stack에 추가
-            var showResult = await _presenter.ShowPageAsync(newPage, context.CancellationToken);
+            var showResult = await _presenter.ShowScreenAsync(newPage, context.CancellationToken);
             if (showResult.IsError)
             {
                 return;
@@ -105,20 +85,14 @@ namespace GameKit.Navigation.Screens.Page.Internal
         {
             if (_stack.TryPop(out var id))
             {
-                var backPageResult = await _registry.GetPageAsync(id);
+                var backPageResult = await _registry.GetScreenWithErrorAsync(id, _router);
                 if (backPageResult.IsError)
                 {
-                    _ = _router.PublishAsync(new PageErrorCommand(
-                        pageId: id,
-                        operation: PageOperation.Back,
-                        errorCode: PageErrorCodes.NotFound,
-                        message: $"Back page '{id}' not found: {backPageResult}"
-                    ));
                     return;
                 }
 
                 var backPage = backPageResult.Value;
-                _ = _presenter.HidePageAsync(backPage);
+                _ = _presenter.HideScreenAsync(backPage);
             }
             else
             {
@@ -128,20 +102,14 @@ namespace GameKit.Navigation.Screens.Page.Internal
 
             if (_stack.TryPeek(out var nextId))
             {
-                var nextPageResult = await _registry.GetPageAsync(nextId);
+                var nextPageResult = await _registry.GetScreenWithErrorAsync(nextId, _router);
                 if (nextPageResult.IsError)
                 {
-                    _ = _router.PublishAsync(new PageErrorCommand(
-                        pageId: nextId,
-                        operation: PageOperation.Back,
-                        errorCode: PageErrorCodes.NotFound,
-                        message: $"Next page '{nextId}' not found: {nextPageResult}"
-                    ));
                     return;
                 }
 
                 var nextPage = nextPageResult.Value;
-                var showResult = await _presenter.ShowPageAsync(nextPage, context.CancellationToken);
+                var showResult = await _presenter.ShowScreenAsync(nextPage, context.CancellationToken);
                 if (showResult.IsError)
                 {
                     return;
@@ -159,20 +127,14 @@ namespace GameKit.Navigation.Screens.Page.Internal
         {
             var newPageId = command.PageId;
 
-            if (AlreadyCurrentPage(newPageId))
+            if (_stack.AlreadyCurrentScreen(newPageId, _router))
             {
                 return;
             }
 
-            var newPageResult = await _registry.GetPageAsync(newPageId);
+            var newPageResult = await _registry.GetScreenWithErrorAsync(newPageId, _router);
             if (newPageResult.IsError)
             {
-                _ = _router.PublishAsync(new PageErrorCommand(
-                    pageId: newPageId,
-                    operation: PageOperation.Push,
-                    errorCode: PageErrorCodes.NotFound,
-                    message: $"Page '{newPageId}' not found: {newPageResult}"
-                ));
                 return;
             }
 
@@ -186,23 +148,17 @@ namespace GameKit.Navigation.Screens.Page.Internal
                     return;
                 }
 
-                var currentPageResult = await _registry.GetPageAsync(currentId);
+                var currentPageResult = await _registry.GetScreenWithErrorAsync(currentId, _router);
                 if (currentPageResult.IsError)
                 {
-                    _ = _router.PublishAsync(new PageErrorCommand(
-                        pageId: currentId,
-                        operation: PageOperation.Push,
-                        errorCode: PageErrorCodes.NotFound,
-                        message: $"Current page '{currentId}' not found: {currentPageResult}"
-                    ));
                     return;
                 }
 
                 var currentPage = currentPageResult.Value;
-                _presenter.HidePageAsync(currentPage);
+                _ = _presenter.HideScreenAsync(currentPage);
             }
 
-            var showResult = await _presenter.ShowPageAsync(newPage, context.CancellationToken);
+            var showResult = await _presenter.ShowScreenAsync(newPage, context.CancellationToken);
             if (showResult.IsError)
             {
                 return;
@@ -215,20 +171,14 @@ namespace GameKit.Navigation.Screens.Page.Internal
         private async UniTask On(ReplacePageCommand command, PublishContext context)
         {
             var newPageId = command.PageId;
-            if (AlreadyCurrentPage(newPageId))
+            if (_stack.AlreadyCurrentScreen(newPageId, _router))
             {
                 return;
             }
 
-            var newPageResult = await _registry.GetPageAsync(newPageId);
+            var newPageResult = await _registry.GetScreenWithErrorAsync(newPageId, _router);
             if (newPageResult.IsError)
             {
-                _ = _router.PublishAsync(new PageErrorCommand(
-                    pageId: newPageId,
-                    operation: PageOperation.Replace,
-                    errorCode: PageErrorCodes.NotFound,
-                    message: $"Page '{newPageId}' not found: {newPageResult}"
-                ));
                 return;
             }
 
@@ -236,27 +186,21 @@ namespace GameKit.Navigation.Screens.Page.Internal
 
             if (_stack.TryPop(out var oldId))
             {
-                var oldPageResult = await _registry.GetPageAsync(oldId);
+                var oldPageResult = await _registry.GetScreenWithErrorAsync(oldId, _router);
                 if (oldPageResult.IsError)
                 {
-                    _ = _router.PublishAsync(new PageErrorCommand(
-                        pageId: oldId,
-                        operation: PageOperation.Replace,
-                        errorCode: PageErrorCodes.NotFound,
-                        message: $"Old page '{oldId}' not found: {oldPageResult}"
-                    ));
                     return;
                 }
 
                 var oldPage = oldPageResult.Value;
-                _presenter.HidePageAsync(oldPage);
+                _ = _presenter.HideScreenAsync(oldPage);
             }
             else
             {
                 _logger.LogDebug("No page to replace.");
             }
 
-            var showResult = await _presenter.ShowPageAsync(newPage, context.CancellationToken);
+            var showResult = await _presenter.ShowScreenAsync(newPage, context.CancellationToken);
             if (showResult.IsError)
             {
                 return;

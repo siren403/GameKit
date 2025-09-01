@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core;
+using GameKit.Navigation.Screens.Core.Commands;
+using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Errors;
 using GameKit.Navigation.Screens.Page.Internal;
@@ -125,8 +128,8 @@ namespace GameKit.Navigation.Tests.Screens
             var router = container.Resolve<Router>();
             var navigator = container.Resolve<PageNavigator>();
 
-            PageErrorCommand? receivedError = null;
-            using var subscribe = router.Subscribe<PageErrorCommand>((error, ctx) => { receivedError = error; });
+            ScreenErrorCommand? receivedError = null;
+            using var subscribe = router.Subscribe<ScreenErrorCommand>((error, ctx) => { receivedError = error; });
 
             // 첫 번째 이동
             await router.ToPageAsync(toPage.Id);
@@ -144,10 +147,9 @@ namespace GameKit.Navigation.Tests.Screens
 
             // PageErrorCommand 검증
             Assert.IsNotNull(receivedError);
-            Assert.AreEqual(MockPage.Login, receivedError.Value.PageId);
-            Assert.AreEqual(PageOperation.None, receivedError.Value.Operation);
-            Assert.AreEqual(PageErrorCodes.AlreadyCurrent, receivedError.Value.ErrorCode);
-            Assert.That(receivedError.Value.Message, Does.Contain("Already on page"));
+            Assert.AreEqual(MockPage.Login, receivedError.Value.ScreenId);
+            Assert.AreEqual(ScreenOperation.None, receivedError.Value.Operation);
+            Assert.AreEqual(ScreenErrorCodes.AlreadyCurrent, receivedError.Value.ErrorCode);
         });
 
         #endregion
@@ -165,8 +167,8 @@ namespace GameKit.Navigation.Tests.Screens
             var router = container.Resolve<Router>();
             var navigator = container.Resolve<PageNavigator>();
 
-            PageErrorCommand? receivedError = null;
-            using var subscribe = router.Subscribe<PageErrorCommand>((error, ctx) => { receivedError = error; });
+            ScreenErrorCommand? receivedError = null;
+            using var subscribe = router.Subscribe<ScreenErrorCommand>((error, ctx) => { receivedError = error; });
 
             // Act - 존재하지 않는 페이지로 이동 시도
             await router.ToPageAsync("NonExistentPage");
@@ -177,10 +179,9 @@ namespace GameKit.Navigation.Tests.Screens
 
             // PageErrorCommand 검증
             Assert.IsNotNull(receivedError);
-            Assert.AreEqual("NonExistentPage", receivedError.Value.PageId);
-            Assert.AreEqual(PageOperation.To, receivedError.Value.Operation);
-            Assert.AreEqual(PageErrorCodes.NotFound, receivedError.Value.ErrorCode);
-            Assert.That(receivedError.Value.Message, Does.Contain("not found"));
+            Assert.AreEqual("NonExistentPage", receivedError.Value.ScreenId);
+            Assert.AreEqual(ScreenOperation.Get, receivedError.Value.Operation);
+            Assert.AreEqual(ScreenErrorCodes.NotFound, receivedError.Value.ErrorCode);
         });
 
         [UnityTest]
@@ -212,9 +213,9 @@ namespace GameKit.Navigation.Tests.Screens
             Assert.IsFalse(stack.TryPeek(out var topPageId), "Show 실패 시 스택에 추가되지 않아야 함");
 
             // PageErrorCommand가 발생했는지 확인
-            Assert.AreEqual(failingPage.Id, failingPage.PageError.PageId);
-            Assert.AreEqual(PageOperation.None, failingPage.PageError.Operation);
-            Assert.AreEqual(PageErrorCodes.ShowFailed, failingPage.PageError.ErrorCode);
+            Assert.AreEqual(failingPage.Id, failingPage.ScreenError.ScreenId);
+            Assert.AreEqual(ScreenOperation.Show, failingPage.ScreenError.Operation);
+            Assert.AreEqual(ScreenErrorCodes.ShowFailed, failingPage.ScreenError.ErrorCode);
         });
 
         #endregion
@@ -331,7 +332,7 @@ namespace GameKit.Navigation.Tests.Screens
 
             // Act - 작업 시작 후 즉시 취소
             var task = router.ToPageAsync(slowPage.Id, cts.Token);
-            await UniTask.DelayFrame(1);
+            await UniTask.DelayFrame(1, cancellationToken: cts.Token);
             cts.Cancel();
 
             try

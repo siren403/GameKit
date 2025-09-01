@@ -1,5 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
+using GameKit.Navigation.Screens.Core;
+using GameKit.Navigation.Screens.Core.Commands;
 using GameKit.Navigation.Screens.Page;
 using GameKit.Navigation.Screens.Page.Commands;
 using UnityEngine;
@@ -24,7 +26,7 @@ namespace GameKit.Navigation.Tests.Screens
         public bool IsVisible { get; set; }
         public FailureMode Mode { get; set; } = FailureMode.None;
 
-        public PageErrorCommand PageError { get; private set; }
+        public ScreenErrorCommand ScreenError { get; private set; }
 
         [Route]
         private async UniTask On(ShowCommand command)
@@ -55,10 +57,10 @@ namespace GameKit.Navigation.Tests.Screens
         }
 
         [Route]
-        private void On(PageErrorCommand command)
+        private void On(ScreenErrorCommand command)
         {
             IsVisible = false;
-            PageError = command;
+            ScreenError = command;
         }
     }
 }

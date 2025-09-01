@@ -1,4 +1,5 @@
 ﻿using GameKit.Navigation.VContainer;
+using Samples.Navigation.SceneOverview.Dialogs;
 using Samples.Navigation.SceneOverview.Pages;
 using VContainer;
 using VContainer.Unity;
@@ -16,6 +17,12 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 pages.InHierarchy<InitPage>(nameof(InitPage));
                 pages.InHierarchy<DownloadPage>(nameof(DownloadPage));
                 pages.InHierarchy<ErrorPage, string>(nameof(ErrorPage));
+            }, nameof(IntroScene));
+
+            builder.RegisterDialogs(dialogs =>
+            {
+                //
+                dialogs.InHierarchy<ConfirmDialog>(nameof(ConfirmDialog));
             }, nameof(IntroScene));
         }
     }
