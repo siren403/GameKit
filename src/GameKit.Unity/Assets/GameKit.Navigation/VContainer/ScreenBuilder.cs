@@ -8,7 +8,7 @@ using VContainer.Unity;
 
 namespace GameKit.Navigation.VContainer
 {
-    public sealed class ScreenBuilder<TScreen> where TScreen : IScreen
+    public sealed class ScreenBuilder<TLayer> where TLayer : IScreen
     {
         private readonly IContainerBuilder _builder;
 
@@ -17,7 +17,7 @@ namespace GameKit.Navigation.VContainer
             _builder = builder;
         }
 
-        public void InMemory<T>(string id, T instance) where T : TScreen
+        public void InMemory<T>(string id, T instance) where T : TLayer
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -31,12 +31,12 @@ namespace GameKit.Navigation.VContainer
 
             _builder.RegisterBuildCallback(container =>
             {
-                var registry = container.Resolve<ScreenRegistry<TScreen>>();
+                var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 registry.AddScreen(id, instance);
             });
         }
 
-        public void InMemory<T>(string id) where T : TScreen
+        public void InMemory<T>(string id) where T : TLayer
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -46,13 +46,13 @@ namespace GameKit.Navigation.VContainer
             _builder.Register<T>(Lifetime.Transient).AsSelf();
             _builder.RegisterBuildCallback(container =>
             {
-                var registry = container.Resolve<ScreenRegistry<TScreen>>();
+                var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var page = container.Resolve<T>();
                 registry.AddScreen(id, page);
             });
         }
 
-        public void InHierarchy<T>(string id) where T : TScreen
+        public void InHierarchy<T>(string id) where T : TLayer
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -62,21 +62,29 @@ namespace GameKit.Navigation.VContainer
             _builder.RegisterComponentInHierarchy<T>();
             _builder.RegisterBuildCallback(container =>
             {
-                var registry = container.Resolve<ScreenRegistry<TScreen>>();
+                var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var page = container.Resolve<T>();
                 registry.AddScreen(id, page);
             });
         }
 
-        public void InHierarchy<T, TProps>(string id) where T : TScreen, IPageProps<TProps>
+        // public void InHierarchy<T, TProps>(string id) where T : TScreen, IPageProps<TProps>
+        // {
+        //     InHierarchy<T>(id);
+        //     _builder.Register<QuickPage<T, TProps>>(Lifetime.Singleton)
+        //         .As<IQuickPage<T, TProps>>()
+        //         .WithParameter(id);
+        // }
+
+        public void InHierarchyWithLauncher<T, TProps>(string id) where T : TLayer, IScreenProps<TProps>
         {
             InHierarchy<T>(id);
-            _builder.Register<QuickPage<T, TProps>>(Lifetime.Singleton)
-                .As<IQuickPage<T, TProps>>()
+            _builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Scoped)
+                .As<IScreenLauncher<T, TProps>>()
                 .WithParameter(id);
         }
 
-        public void InAddressable<T>(string id, string key) where T : TScreen
+        public void InAddressable<T>(string id, string key) where T : TLayer
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -90,13 +98,13 @@ namespace GameKit.Navigation.VContainer
 
             _builder.RegisterBuildCallback(container =>
             {
-                var registry = container.Resolve<ScreenRegistry<TScreen>>();
+                var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 registry.AddScreen<T>(id, key);
             });
         }
 
         public void InAddressable<T, TParent>(string id, string key)
-            where T : TScreen
+            where T : TLayer
             where TParent : IParentProvider
         {
             if (string.IsNullOrEmpty(key))
@@ -111,7 +119,7 @@ namespace GameKit.Navigation.VContainer
 
             _builder.RegisterBuildCallback(container =>
             {
-                var registry = container.Resolve<ScreenRegistry<TScreen>>();
+                var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var parentProvider = container.Resolve<TParent>();
                 registry.AddScreen<T>(id, key, parentProvider.Parent);
             });

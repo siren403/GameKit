@@ -1,5 +1,5 @@
 ﻿using GameKit.Navigation.Components.Pages;
-using GameKit.Navigation.Screens.Page;
+using GameKit.Navigation.Screens.Core;
 using R3;
 using TMPro;
 using UnityEngine;
@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Samples.Navigation.SceneOverview.Pages
 {
-    public class ErrorPage : CanvasPage, IPageProps<string>
+    public class ErrorPage : CanvasPage, IScreenProps<string>
     {
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private Button backButton;
@@ -23,7 +23,7 @@ namespace Samples.Navigation.SceneOverview.Pages
             set => messageText.text = value;
         }
 
-        public string Props
+        string IScreenProps<string>.Props
         {
             set => Message = value;
         }

@@ -11,7 +11,7 @@ using VitalRouter;
 namespace Samples.Navigation.SceneOverview.Dialogs
 {
     [Routes]
-    public partial class ConfirmDialog : MonoBehaviour, IDialog
+    public partial class ConfirmDialog : MonoBehaviour, IDialog, IScreenProps<string>
     {
         public bool IsVisible
         {
@@ -33,6 +33,12 @@ namespace Samples.Navigation.SceneOverview.Dialogs
         {
             set => messageText.text = value;
         }
+
+        string IScreenProps<string>.Props
+        {
+            set => Message = value;
+        }
+
 
         public Observable<Unit> OnClickScrim => scrimButton.OnClickAsObservable();
         public Observable<Unit> OnClickConfirm => confirmButton.OnClickAsObservable();

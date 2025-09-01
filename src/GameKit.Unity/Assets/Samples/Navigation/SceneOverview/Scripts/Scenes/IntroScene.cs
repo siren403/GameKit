@@ -16,13 +16,13 @@ namespace Samples.Navigation.SceneOverview.Scenes
                 //
                 pages.InHierarchy<InitPage>(nameof(InitPage));
                 pages.InHierarchy<DownloadPage>(nameof(DownloadPage));
-                pages.InHierarchy<ErrorPage, string>(nameof(ErrorPage));
+                pages.InHierarchyWithLauncher<ErrorPage, string>(nameof(ErrorPage));
             }, nameof(IntroScene));
 
             builder.RegisterDialogs(dialogs =>
             {
                 //
-                dialogs.InHierarchy<ConfirmDialog>(nameof(ConfirmDialog));
+                dialogs.InHierarchyWithLauncher<ConfirmDialog, string>(nameof(ConfirmDialog));
             }, nameof(IntroScene));
         }
     }

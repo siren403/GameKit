@@ -2,8 +2,10 @@ using System;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Navigation.Scenes.Commands;
+using GameKit.Navigation.Screens.Core;
 using GameKit.Navigation.Screens.Dialog.Commands;
 using GameKit.Navigation.Screens.Page;
+using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
 using R3;
 using Samples.Navigation.SceneOverview.Dialogs;
@@ -23,14 +25,14 @@ namespace Samples.Navigation.SceneOverview.Scenes
     {
         private readonly Router _router;
         private readonly InitPage _initPage;
-        private readonly IQuickPage<ErrorPage, string> _errorPage;
+        private readonly IScreenLauncher<ErrorPage, string> _errorPage;
         private readonly DownloadPage _downloadPage;
         private readonly ConfirmDialog _confirmDialog;
 
         public IntroEntryPoint(
             Router router,
             InitPage initPage,
-            IQuickPage<ErrorPage, string> errorPage,
+            IScreenLauncher<ErrorPage, string> errorPage,
             DownloadPage downloadPage,
             ConfirmDialog confirmDialog
         )
@@ -44,10 +46,10 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
         private void PushErrorPage(string message)
         {
-            _errorPage.PushAsync(message, _router, static (router, page, context) =>
+            _errorPage.PublishAsync(new PushPageCommand(nameof(ErrorPage)), message, static (page, context) =>
             {
-                context.OnBack(page.OnClickBack);
-                context.OnClick(page.OnClickCopy, async static (msg, ct) =>
+                context.Subscribe(page.OnClickBack, new BackPageCommand());
+                context.Subscribe(page.OnClickCopy, async static (msg, ct) =>
                 {
                     Debug.Log(msg);
                     GUIUtility.systemCopyBuffer = msg;
