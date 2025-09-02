@@ -10,9 +10,31 @@ namespace GameKit.SceneLauncher.VContainer
     public static class SceneScopeInitializer
     {
         private static SceneInstallerResolver? _resolver;
-        private static bool? _isStartedFromMainScene = null;
+        private static Scene? _startedScene = null;
 
-        public static bool IsStartedFromMainScene => _isStartedFromMainScene ?? false;
+        public static bool IsStartedFromMainScene
+        {
+            get
+            {
+                if (_startedScene.HasValue)
+                {
+                    return _startedScene.Value.buildIndex == 0;
+                }
+
+                return false;
+            }
+        }
+
+        public static bool IsStartedScene(Scene scene)
+        {
+            if (_startedScene.HasValue)
+            {
+                return _startedScene.Value == scene;
+            }
+
+            return false;
+        }
+
 
         public static SceneInstallerResolver Resolver => _resolver!;
 
@@ -39,7 +61,7 @@ namespace GameKit.SceneLauncher.VContainer
             }
 
             var activeScene = SceneManager.GetActiveScene();
-            _isStartedFromMainScene = activeScene.buildIndex == 0;
+            _startedScene = activeScene;
         }
 
 
