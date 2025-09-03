@@ -108,8 +108,8 @@ namespace GameKit.Common.Results
         public override string ToString()
         {
             return IsError
-                ? $"Errors: {string.Join(",\n", GetErrors().ToArray())}"
-                : $"Ok: {_value}";
+                ? $"Error ({GetErrors().Length}) = {FirstError}"
+                : $"Ok = {_value}";
         }
 
         public static FastResult<T> Ok(T value) => new(value);
