@@ -79,9 +79,13 @@ namespace GameKit.Navigation.VContainer
         public void InHierarchyWithLauncher<T, TProps>(string id) where T : TLayer, IScreenProps<TProps>
         {
             InHierarchy<T>(id);
-            _builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Scoped)
+            _builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Singleton)
                 .As<IScreenLauncher<T, TProps>>()
                 .WithParameter(id);
+            _builder.RegisterBuildCallback(container =>
+            {
+                var launcher = container.Resolve<IScreenLauncher<T, TProps>>();
+            });
         }
 
         public void InAddressable<T>(string id, string key) where T : TLayer
