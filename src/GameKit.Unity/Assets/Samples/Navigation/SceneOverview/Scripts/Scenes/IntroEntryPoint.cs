@@ -1,12 +1,15 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Assets;
 using GameKit.Navigation.Scenes.Commands;
 using GameKit.Navigation.Screens.Core;
+using GameKit.Navigation.Screens.Dialog;
 using GameKit.Navigation.Screens.Dialog.Commands;
 using GameKit.Navigation.Screens.Page;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
+using GameKit.Navigation.Screens.Sessions.Dialog;
 using R3;
 using Samples.Navigation.SceneOverview.Dialogs;
 using Samples.Navigation.SceneOverview.Pages;
@@ -58,12 +61,23 @@ namespace Samples.Navigation.SceneOverview.Scenes
             });
         }
 
+
         public void Initialize()
         {
             _initPage.OnClickInit.SubscribeAwait(async (_, ct) =>
             {
-                _confirmDialog.Message = "Start initialization?";
+                // {
+                //     var disposable = new DisposableBag();
+                //     var message = new ReactiveProperty<string>("Start initialization?");
+                //     _confirmDialog.Message = "Start initialization?";
+                //     message.Subscribe(
+                //         _confirmDialog,
+                //         (msg, dialog) => dialog.Message = msg
+                //     ).AddTo(ref disposable);
+                //     disposable.Dispose();
+                // }
 
+                _confirmDialog.Message = "Start initialization?";
                 await _router.PublishAsync(new ShowDialogCommand(nameof(ConfirmDialog)), ct);
                 var dialogResult = await Observable.Merge(
                     _confirmDialog.OnClickConfirm.Select(_ => 1),

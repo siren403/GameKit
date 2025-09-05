@@ -43,7 +43,7 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentException("Screen ID cannot be null or empty.", nameof(id));
             }
 
-            _builder.Register<T>(Lifetime.Transient).AsSelf();
+            _builder.Register<T>(Lifetime.Scoped).AsSelf();
             _builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
