@@ -4,14 +4,14 @@ using R3;
 
 namespace GameKit.Navigation.Screens.Sessions.Dialog
 {
-    public struct ReviewBinder<TState> : IDisposable
+    public struct DecisionBinder<TState> : IDisposable
     {
         private readonly TState _initialState;
         private readonly ReactiveProperty<TState> _property;
         private readonly ISubject<(bool approved, TState state)> _stream;
         private DisposableBag _disposable;
 
-        public ReviewBinder(TState initialState,
+        public DecisionBinder(TState initialState,
             ReactiveProperty<TState> property,
             ISubject<(bool approved, TState state)> stream
         )

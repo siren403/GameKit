@@ -11,6 +11,7 @@ using VitalRouter.VContainer;
 
 namespace GameKit.Navigation.VContainer
 {
+
     public static partial class ContainerBuilderExtensions
     {
         public static void RegisterPages(
@@ -24,11 +25,27 @@ namespace GameKit.Navigation.VContainer
 
         public static void RegisterDialogs(
             this IContainerBuilder builder,
-            Action<ScreenBuilder<IDialog>> configuration,
+            Action<DialogBuilder> configuration,
             string? name = null
         )
         {
-            builder.RegisterStackNavigator<DialogNavigator, IDialog, DialogStack>(configuration, name);
+            builder.Register<ScreenRegistry<IDialog>>(Lifetime.Scoped).WithParameter(name);
+            builder.Register<ScreenPresenter<IDialog>>(Lifetime.Scoped);
+            builder.Register<DialogStack>(Lifetime.Scoped);
+
+            builder.RegisterVitalRouter(routing => routing.Map<DialogNavigator>());
+
+            var pages = new DialogBuilder(builder);
+            configuration.Invoke(pages);
+
+            builder.RegisterBuildCallback(container =>
+            {
+                var presenter = container.Resolve<ScreenPresenter<IDialog>>();
+                var registry = container.Resolve<ScreenRegistry<IDialog>>();
+                presenter.Initialize(registry.CachedScreens);
+            });
+
+            builder.RegisterLogger();
         }
 
         private static void RegisterStackNavigator<T, TScreen, TStack>(

@@ -9,7 +9,7 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog
     {
         UniTask<(bool approved, TState state)> ExecuteAsync(
             TState initialState,
-            Action<TDialog, ReviewBinder<TState>> binding,
+            Action<TDialog, DecisionBinder<TState>> binding,
             CancellationToken ct = default
         );
     }

@@ -8,5 +8,6 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog
     public interface IQuestionSession<out TDialog, TResult> where TDialog : IDialog
     {
         UniTask<TResult> ExecuteAsync(Action<TDialog, AnswerBinder<TResult>> binding, CancellationToken ct = default);
+        UniTask<TResult> ShowAsync(Action<TDialog, AnswerBinder<TResult>> binding, CancellationToken ct = default);
     }
 }

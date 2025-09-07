@@ -3,18 +3,21 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Dialog;
+using GameKit.Navigation.Screens.Dialog.Commands;
 using R3;
 using VitalRouter;
 
 namespace GameKit.Navigation.Screens.Sessions.Dialog.Internal
 {
-    internal sealed class QuestionSession<TDialog, TResult> : IQuestionSession<TDialog, TResult>, IDisposable where TDialog : IDialog
+    internal sealed class QuestionSession<TDialog, TResult> : IQuestionSession<TDialog, TResult>, IDisposable
+        where TDialog : IDialog
     {
-        private readonly Router _router;
         private readonly string _id;
         private readonly ScreenRegistry<IDialog> _registry;
-        private readonly ScreenPresenter<IDialog> _presenter;
         private readonly Subject<TResult> _stream = new();
+
+        private readonly Router _router;
+        private readonly ScreenPresenter<IDialog> _presenter;
 
         public QuestionSession(
             Router router,
@@ -44,6 +47,17 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog.Internal
             using var binder = new AnswerBinder<TResult>(_stream);
             binding.Invoke(dialog, binder);
             return await task;
+        }
+
+        public async UniTask<TResult> ShowAsync(
+            Action<TDialog, AnswerBinder<TResult>> binding,
+            CancellationToken ct = default
+        )
+        {
+            await _router.PublishAsync(new ShowDialogCommand(_id), ct);
+            var result = await ExecuteAsync(binding, ct);
+            await _router.PublishAsync(new HideDialogCommand(), ct);
+            return result;
         }
 
         public void Dispose()

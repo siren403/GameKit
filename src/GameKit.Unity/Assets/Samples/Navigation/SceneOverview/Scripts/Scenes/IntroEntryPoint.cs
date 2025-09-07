@@ -30,21 +30,21 @@ namespace Samples.Navigation.SceneOverview.Scenes
         private readonly InitPage _initPage;
         private readonly IScreenLauncher<ErrorPage, string> _errorPage;
         private readonly DownloadPage _downloadPage;
-        private readonly ConfirmDialog _confirmDialog;
+        private readonly IQuestionSession<ConfirmDialog, bool> _confirmQuestion;
 
         public IntroEntryPoint(
             Router router,
             InitPage initPage,
             IScreenLauncher<ErrorPage, string> errorPage,
             DownloadPage downloadPage,
-            ConfirmDialog confirmDialog
+            IQuestionSession<ConfirmDialog, bool> confirmQuestion
         )
         {
             _router = router;
             _initPage = initPage;
             _errorPage = errorPage;
             _downloadPage = downloadPage;
-            _confirmDialog = confirmDialog;
+            _confirmQuestion = confirmQuestion;
         }
 
         private void PushErrorPage(string message)
@@ -66,27 +66,13 @@ namespace Samples.Navigation.SceneOverview.Scenes
         {
             _initPage.OnClickInit.SubscribeAwait(async (_, ct) =>
             {
-                // {
-                //     var disposable = new DisposableBag();
-                //     var message = new ReactiveProperty<string>("Start initialization?");
-                //     _confirmDialog.Message = "Start initialization?";
-                //     message.Subscribe(
-                //         _confirmDialog,
-                //         (msg, dialog) => dialog.Message = msg
-                //     ).AddTo(ref disposable);
-                //     disposable.Dispose();
-                // }
-
-                _confirmDialog.Message = "Start initialization?";
-                await _router.PublishAsync(new ShowDialogCommand(nameof(ConfirmDialog)), ct);
-                var dialogResult = await Observable.Merge(
-                    _confirmDialog.OnClickConfirm.Select(_ => 1),
-                    _confirmDialog.OnClickCancel.Select(_ => 0),
-                    _confirmDialog.OnClickScrim.Select(_ => 0)
-                ).FirstAsync(cancellationToken: ct);
-
-                await _router.PublishAsync(new HideDialogCommand(), ct);
-                if (dialogResult == 0)
+                var isConfirmed = await _confirmQuestion.ShowAsync(static (dialog, answer) =>
+                {
+                    dialog.Message = "Start initialization?"; 
+                    answer.Yes(dialog.OnClickConfirm);
+                    answer.No(dialog.OnClickCancel, dialog.OnClickScrim);
+                }, ct);
+                if (!isConfirmed)
                 {
                     Debug.Log("Initialization cancelled by user.");
                     return;

@@ -34,7 +34,7 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog.Internal
 
         public async UniTask<(bool approved, TState state)> ExecuteAsync(
             TState initialState,
-            Action<TDialog, ReviewBinder<TState>> binding,
+            Action<TDialog, DecisionBinder<TState>> binding,
             CancellationToken ct = default
         )
         {
@@ -46,7 +46,7 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog.Internal
 
             _state.Value = initialState;
             var task = _stream.FirstAsync(cancellationToken: ct);
-            using var binder = new ReviewBinder<TState>(initialState, _state, _stream);
+            using var binder = new DecisionBinder<TState>(initialState, _state, _stream);
             binding.Invoke(dialog, binder);
             return await task;
         }

@@ -8,13 +8,13 @@ using VContainer.Unity;
 
 namespace GameKit.Navigation.VContainer
 {
-    public sealed class ScreenBuilder<TLayer> where TLayer : IScreen
+    public class ScreenBuilder<TLayer> where TLayer : IScreen
     {
-        private readonly IContainerBuilder _builder;
+        protected readonly IContainerBuilder Builder;
 
         public ScreenBuilder(IContainerBuilder builder)
         {
-            _builder = builder;
+            Builder = builder;
         }
 
         public void InMemory<T>(string id, T instance) where T : TLayer
@@ -29,7 +29,7 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentNullException(nameof(instance), "Screen instance cannot be null.");
             }
 
-            _builder.RegisterBuildCallback(container =>
+            Builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 registry.AddScreen(id, instance);
@@ -43,8 +43,8 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentException("Screen ID cannot be null or empty.", nameof(id));
             }
 
-            _builder.Register<T>(Lifetime.Scoped).AsSelf();
-            _builder.RegisterBuildCallback(container =>
+            Builder.Register<T>(Lifetime.Scoped).AsSelf();
+            Builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var page = container.Resolve<T>();
@@ -59,8 +59,8 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentException("Screen ID cannot be null or empty.", nameof(id));
             }
 
-            _builder.RegisterComponentInHierarchy<T>();
-            _builder.RegisterBuildCallback(container =>
+            Builder.RegisterComponentInHierarchy<T>();
+            Builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var page = container.Resolve<T>();
@@ -79,10 +79,10 @@ namespace GameKit.Navigation.VContainer
         public void InHierarchyWithLauncher<T, TProps>(string id) where T : TLayer, IScreenProps<TProps>
         {
             InHierarchy<T>(id);
-            _builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Singleton)
+            Builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Singleton)
                 .As<IScreenLauncher<T, TProps>>()
                 .WithParameter(id);
-            _builder.RegisterBuildCallback(container =>
+            Builder.RegisterBuildCallback(container =>
             {
                 var launcher = container.Resolve<IScreenLauncher<T, TProps>>();
             });
@@ -100,7 +100,7 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentException("Addressable key cannot be null or empty.", nameof(key));
             }
 
-            _builder.RegisterBuildCallback(container =>
+            Builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 registry.AddScreen<T>(id, key);
@@ -116,12 +116,12 @@ namespace GameKit.Navigation.VContainer
                 throw new ArgumentException("Addressable key cannot be null or empty.", nameof(key));
             }
 
-            if (!_builder.Exists(typeof(T)))
+            if (!Builder.Exists(typeof(T)))
             {
-                _builder.RegisterComponentInHierarchy<TParent>();
+                Builder.RegisterComponentInHierarchy<TParent>();
             }
 
-            _builder.RegisterBuildCallback(container =>
+            Builder.RegisterBuildCallback(container =>
             {
                 var registry = container.Resolve<ScreenRegistry<TLayer>>();
                 var parentProvider = container.Resolve<TParent>();

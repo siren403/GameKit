@@ -13,7 +13,6 @@ namespace Samples.Navigation.SceneOverview.Scenes
             builder.RegisterEntryPoint<IntroEntryPoint>();
             builder.RegisterPages(pages =>
             {
-                //
                 pages.InHierarchy<InitPage>(nameof(InitPage));
                 pages.InHierarchy<DownloadPage>(nameof(DownloadPage));
                 pages.InHierarchyWithLauncher<ErrorPage, string>(nameof(ErrorPage));
@@ -21,8 +20,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
 
             builder.RegisterDialogs(dialogs =>
             {
-                //
-                dialogs.InHierarchyWithLauncher<ConfirmDialog, string>(nameof(ConfirmDialog));
+                dialogs.QuestionInHierarchy<ConfirmDialog, bool>(nameof(ConfirmDialog));
             }, nameof(IntroScene));
         }
     }
