@@ -89,8 +89,7 @@ namespace GameKit.SceneLauncher.VContainer
                     isRegisteredScene = true;
                 }
 
-                var name = scene.name;
-                if (!isRegisteredScene && _resolver.ContainsName(name))
+                if (scene.buildIndex >= 0 || (!isRegisteredScene && _resolver.ContainsName(scene.name)))
                 {
                     isRegisteredScene = true;
                 }
