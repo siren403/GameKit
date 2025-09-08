@@ -1,6 +1,7 @@
 using System;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
+using GameKit.Navigation.Screens.Sessions.Page;
 using GameKit.Navigation.VContainer;
 using Samples.Navigation.PageQuickStart.Pages;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace Samples.Navigation.PageQuickStart
         {
             builder.RegisterPages(pages =>
             {
-                pages.InHierarchy<LoginPage>(PageIds.Login);
+                pages.SessionInHierarchy<LoginPage>(PageIds.Login);
                 pages.InHierarchy<HomePage>(PageIds.Home);
                 pages.InAddressable<SettingsPage, PageRoot>(
                     PageIds.Settings,
@@ -33,11 +34,17 @@ namespace Samples.Navigation.PageQuickStart
         {
             private readonly Router _router;
             private readonly UIDocument _document;
+            private readonly IPageSession<LoginPage> _login;
 
-            public EntryPoint(Router router, UIDocument document)
+            public EntryPoint(
+                Router router,
+                UIDocument document,
+                IPageSession<LoginPage> login
+            )
             {
                 _router = router;
                 _document = document;
+                _login = login;
             }
 
             public void Initialize()
@@ -47,7 +54,10 @@ namespace Samples.Navigation.PageQuickStart
                 var loginTo = root.Q<Button>(classes: new[] { "login", "to" });
                 var loginPush = root.Q<Button>(classes: new[] { "login", "push" });
                 var loginReplace = root.Q<Button>(classes: new[] { "login", "replace" });
-                loginTo.clicked += () => _router.ToPageAsync(PageIds.Login);
+                loginTo.clicked += () => _login.PushAsync(static (page, binder) =>
+                {
+                    
+                });
                 loginPush.clicked += () => _router.PushPageAsync(PageIds.Login);
                 loginReplace.clicked += () => _router.ReplacePageAsync(PageIds.Login);
 

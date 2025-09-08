@@ -11,16 +11,31 @@ using VitalRouter.VContainer;
 
 namespace GameKit.Navigation.VContainer
 {
-
     public static partial class ContainerBuilderExtensions
     {
         public static void RegisterPages(
             this IContainerBuilder builder,
-            Action<ScreenBuilder<IPage>> configuration,
+            Action<PageBuilder> configuration,
             string? name = null
         )
         {
-            builder.RegisterStackNavigator<PageNavigator, IPage, PageStack>(configuration, name);
+            builder.Register<ScreenRegistry<IPage>>(Lifetime.Scoped).WithParameter(name);
+            builder.Register<ScreenPresenter<IPage>>(Lifetime.Scoped);
+            builder.Register<PageStack>(Lifetime.Scoped);
+
+            builder.RegisterVitalRouter(routing => routing.Map<PageNavigator>());
+
+            var pages = new PageBuilder(builder);
+            configuration.Invoke(pages);
+
+            builder.RegisterBuildCallback(container =>
+            {
+                var presenter = container.Resolve<ScreenPresenter<IPage>>();
+                var registry = container.Resolve<ScreenRegistry<IPage>>();
+                presenter.Initialize(registry.CachedScreens);
+            });
+
+            builder.RegisterLogger();
         }
 
         public static void RegisterDialogs(

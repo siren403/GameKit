@@ -1,5 +1,4 @@
 using System;
-using GameKit.Navigation.Screens.Core.Internal;
 using GameKit.Navigation.Screens.Dialog;
 using GameKit.Navigation.Screens.Sessions.Dialog;
 using GameKit.Navigation.Screens.Sessions.Dialog.Internal;

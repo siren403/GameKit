@@ -10,6 +10,7 @@ using GameKit.Navigation.Screens.Page;
 using GameKit.Navigation.Screens.Page.Commands;
 using GameKit.Navigation.Screens.Page.Extensions;
 using GameKit.Navigation.Screens.Sessions.Dialog;
+using GameKit.Navigation.Screens.Sessions.Page;
 using R3;
 using Samples.Navigation.SceneOverview.Dialogs;
 using Samples.Navigation.SceneOverview.Pages;
@@ -28,37 +29,38 @@ namespace Samples.Navigation.SceneOverview.Scenes
     {
         private readonly Router _router;
         private readonly InitPage _initPage;
-        private readonly IScreenLauncher<ErrorPage, string> _errorPage;
         private readonly DownloadPage _downloadPage;
         private readonly IQuestionSession<ConfirmDialog, bool> _confirmQuestion;
+        private readonly IPageSession<ErrorPage> _errorPageSession;
 
         public IntroEntryPoint(
             Router router,
             InitPage initPage,
-            IScreenLauncher<ErrorPage, string> errorPage,
             DownloadPage downloadPage,
-            IQuestionSession<ConfirmDialog, bool> confirmQuestion
+            IQuestionSession<ConfirmDialog, bool> confirmQuestion,
+            IPageSession<ErrorPage> errorPageSession
         )
         {
             _router = router;
             _initPage = initPage;
-            _errorPage = errorPage;
             _downloadPage = downloadPage;
             _confirmQuestion = confirmQuestion;
+            _errorPageSession = errorPageSession;
         }
 
         private void PushErrorPage(string message)
         {
-            _errorPage.PublishAsync(new PushPageCommand(nameof(ErrorPage)), message, static (page, context) =>
+            _errorPageSession.PushAsync(message, static (page, state, binder) =>
             {
-                context.Subscribe(page.OnClickBack, new BackPageCommand());
-                context.Subscribe(page.OnClickCopy, async static (msg, ct) =>
+                page.Message = state;
+                binder.Back(page.OnClickBack);
+                binder.Bind(page.OnClickCopy, async static (message, ct) =>
                 {
-                    Debug.Log(msg);
-                    GUIUtility.systemCopyBuffer = msg;
+                    Debug.Log(message);
+                    GUIUtility.systemCopyBuffer = message;
                     await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: ct);
                 });
-            });
+            }).Forget();
         }
 
 
@@ -68,7 +70,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
             {
                 var isConfirmed = await _confirmQuestion.ShowAsync(static (dialog, answer) =>
                 {
-                    dialog.Message = "Start initialization?"; 
+                    dialog.Message = "Start initialization?";
                     answer.Yes(dialog.OnClickConfirm);
                     answer.No(dialog.OnClickCancel, dialog.OnClickScrim);
                 }, ct);

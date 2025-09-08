@@ -17,19 +17,15 @@ namespace GameKit.Navigation.Screens.Sessions.Dialog.Internal
         private readonly Subject<TResult> _stream = new();
 
         private readonly Router _router;
-        private readonly ScreenPresenter<IDialog> _presenter;
-
         public QuestionSession(
             Router router,
             string id,
-            ScreenRegistry<IDialog> registry,
-            ScreenPresenter<IDialog> presenter
+            ScreenRegistry<IDialog> registry
         )
         {
             _router = router;
             _id = id;
             _registry = registry;
-            _presenter = presenter;
         }
 
         public async UniTask<TResult> ExecuteAsync(

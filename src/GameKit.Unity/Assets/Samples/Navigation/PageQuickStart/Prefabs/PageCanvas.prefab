@@ -105,7 +105,7 @@ MonoBehaviour:
         enabled: 1
         target: {fileID: 3589741186864678077}
         settings:
-          startValue: {x: -1080, y: 0, z: 0}
+          startValue: {x: -1920, y: 0, z: 0}
           endValue: {x: 0, y: 0, z: 0}
           duration: 0.3
           ease: 20
@@ -171,7 +171,7 @@ MonoBehaviour:
         target: {fileID: 3589741186864678077}
         settings:
           startValue: {x: 0, y: 0, z: 0}
-          endValue: {x: 1080, y: 0, z: 0}
+          endValue: {x: 1920, y: 0, z: 0}
           duration: 0.3
           ease: 20
           customEaseCurve:

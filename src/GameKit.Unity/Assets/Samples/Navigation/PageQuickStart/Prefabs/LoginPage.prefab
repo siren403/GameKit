@@ -32,11 +32,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7502172832922308794}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 780, y: 200}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &1206231514642653866
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -296,6 +296,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showAnimation: {fileID: 669884826451588218}
   hideAnimation: {fileID: 4271570203567481906}
+  throwOnShow: 0
+  throwOnHide: 0
 --- !u!224 &7502172832922308794 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3589741186864678077, guid: 7a9b7cd39523a4443897a29a66022347, type: 3}

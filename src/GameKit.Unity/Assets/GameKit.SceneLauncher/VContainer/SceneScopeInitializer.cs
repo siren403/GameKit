@@ -79,13 +79,26 @@ namespace GameKit.SceneLauncher.VContainer
             }
 
             bool loadedMainScene = false;
+            bool isRegisteredScene = false;
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene scene = SceneManager.GetSceneAt(i);
-                if (scene.buildIndex != 0) continue;
+                if (scene.buildIndex == 0)
+                {
+                    loadedMainScene = true;
+                    isRegisteredScene = true;
+                }
 
-                loadedMainScene = true;
-                break;
+                var name = scene.name;
+                if (!isRegisteredScene && _resolver.ContainsName(name))
+                {
+                    isRegisteredScene = true;
+                }
+            }
+
+            if (!isRegisteredScene)
+            {
+                return;
             }
 
             if (!loadedMainScene)

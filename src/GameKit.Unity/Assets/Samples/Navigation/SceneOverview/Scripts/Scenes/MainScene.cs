@@ -1,10 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameKit.Navigation.Scenes.Commands;
 using GameKit.Navigation.VContainer;
 using GameKit.SceneLauncher.VContainer;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
 using VitalRouter;
@@ -24,7 +25,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
             resolver.RegisterName("InitializeScene", new InitializeScene());
             resolver.RegisterName("TransitionScene", new TransitionScene());
             resolver.RegisterName("TitleScene", new TitleScene());
-            
+
             SceneScopeInitializer.Initialize(resolver);
         }
 

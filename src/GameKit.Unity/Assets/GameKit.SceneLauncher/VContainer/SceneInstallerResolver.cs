@@ -55,5 +55,10 @@ namespace GameKit.SceneLauncher.VContainer
                 $"The installer for the scene '{name}' is already registered.");
             _nameInstallers[name] = installer;
         }
+
+        public bool ContainsName(string name)
+        {
+            return _nameInstallers.ContainsKey(name);
+        }
     }
 }

@@ -68,26 +68,6 @@ namespace GameKit.Navigation.VContainer
             });
         }
 
-        // public void InHierarchy<T, TProps>(string id) where T : TScreen, IPageProps<TProps>
-        // {
-        //     InHierarchy<T>(id);
-        //     _builder.Register<QuickPage<T, TProps>>(Lifetime.Singleton)
-        //         .As<IQuickPage<T, TProps>>()
-        //         .WithParameter(id);
-        // }
-
-        public void InHierarchyWithLauncher<T, TProps>(string id) where T : TLayer, IScreenProps<TProps>
-        {
-            InHierarchy<T>(id);
-            Builder.Register<ScreenLauncher<T, TLayer, TProps>>(Lifetime.Singleton)
-                .As<IScreenLauncher<T, TProps>>()
-                .WithParameter(id);
-            Builder.RegisterBuildCallback(container =>
-            {
-                var launcher = container.Resolve<IScreenLauncher<T, TProps>>();
-            });
-        }
-
         public void InAddressable<T>(string id, string key) where T : TLayer
         {
             if (string.IsNullOrEmpty(id))
