@@ -138,5 +138,18 @@ namespace GameKit.Assets
                 Size = 0
             });
         }
+
+        public static async UniTask<IReadOnlyList<T>> LoadAssetsAsync<T>(string key, CancellationToken ct = default)
+        {
+            var handle = Addressables.LoadAssetsAsync<T>(key);
+            var result = await handle.Task;
+            // loaded
+            if (result is List<T> ok)
+            {
+                return ok;
+            }
+
+            return Array.Empty<T>();
+        }
     }
 }

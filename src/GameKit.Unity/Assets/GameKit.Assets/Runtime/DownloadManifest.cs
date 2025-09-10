@@ -14,6 +14,7 @@ namespace GameKit.Assets
 
         private DownloadManifest()
         {
+            Locations = Array.Empty<IResourceLocation>();
         }
 
         public DownloadManifest(ByteSize size, IList<IResourceLocation> locations)
