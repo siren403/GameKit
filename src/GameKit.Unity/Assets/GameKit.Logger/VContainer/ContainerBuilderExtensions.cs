@@ -20,7 +20,7 @@ namespace GameKit.Logger.VContainer
         {
             private readonly IContainerBuilder _builder;
 
-            private Action<ILoggingBuilder> _loggingConfiguration = _ => { };
+            private Action<ILoggingBuilder>? _loggingConfiguration;
 
             public ZLoggerBuilder(IContainerBuilder builder)
             {
@@ -32,25 +32,27 @@ namespace GameKit.Logger.VContainer
             /// </summary>
             public void UseDefaultSettings()
             {
-                _loggingConfiguration = logging =>
-                {
+                _loggingConfiguration = ConfigureDefaultSettings;
+            }
+
+            private void ConfigureDefaultSettings(ILoggingBuilder logging)
+            {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    logging.SetMinimumLevel(LogLevel.Trace);
+                logging.SetMinimumLevel(LogLevel.Trace);
 #else
                     logging.SetMinimumLevel(LogLevel.Information);
                     // 릴리즈에서는 파일 로깅만 사용
                     // logging.AddZLoggerRollingFile((dt, index) => $"Logs/{dt:yyyy-MM-dd}_{index}.log", 1024 * 1024);
 #endif
-                    logging.AddZLoggerUnityDebug(options =>
+                logging.AddZLoggerUnityDebug(options =>
+                {
+                    options.UsePlainTextFormatter(formatter =>
                     {
-                        options.UsePlainTextFormatter(formatter =>
-                        {
-                            formatter.SetPrefixFormatter($"{0} | {1:short} | ({2}) | ",
-                                (in MessageTemplate template, in LogInfo info) =>
-                                    template.Format(info.Timestamp, info.LogLevel, info.Category));
-                        });
+                        formatter.SetPrefixFormatter($"{0} | {1:short} | ({2}) | ",
+                            (in MessageTemplate template, in LogInfo info) =>
+                                template.Format(info.Timestamp, info.LogLevel, info.Category));
                     });
-                };
+                });
             }
 
             internal void Build()
@@ -64,7 +66,17 @@ namespace GameKit.Logger.VContainer
                     return;
                 }
 
-                var loggerFactory = LoggerFactory.Create(logging => { _loggingConfiguration.Invoke(logging); });
+                var loggerFactory = LoggerFactory.Create(logging =>
+                {
+                    if (_loggingConfiguration == null)
+                    {
+                        ConfigureDefaultSettings(logging);
+                    }
+                    else
+                    {
+                        _loggingConfiguration.Invoke(logging);
+                    }
+                });
                 _builder.RegisterInstance(loggerFactory);
                 _builder.Register(typeof(Logger<>), Lifetime.Singleton).As(typeof(ILogger<>));
             }
