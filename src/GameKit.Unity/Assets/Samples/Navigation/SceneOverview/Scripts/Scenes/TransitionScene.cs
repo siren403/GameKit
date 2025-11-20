@@ -14,6 +14,7 @@ namespace Samples.Navigation.SceneOverview.Scenes
             {
                 routing.MapEntryPoint<TransitionPresenter>();
             });
+            builder.RegisterComponentInHierarchy<Slider>();
         }
     }
 }

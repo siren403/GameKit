@@ -154,6 +154,16 @@ namespace GameKit.Navigation.Scenes
                     false
                 );
 
+                while (!handle.IsDone)
+                {
+                    _ = _router.PublishAsync(new TransitionProgressCommand()
+                    {
+                        Location = location.ToString(),
+                        Progress = handle.PercentComplete
+                    });
+                    await UniTask.Yield();
+                }
+
                 var loadSceneResult = await handle.OrError();
                 if (loadSceneResult.IsError)
                 {

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using Cysharp.Threading.Tasks;
 using GameKit.Navigation.Scenes.Commands;
 using LitMotion;
 using UnityEngine;
@@ -12,11 +13,13 @@ namespace Samples.Navigation.SceneOverview
     public partial class TransitionPresenter : IInitializable
     {
         private readonly Image _image;
+        private readonly Slider _slider;
         private readonly RectTransform _transform;
 
-        public TransitionPresenter(Image image)
+        public TransitionPresenter(Image image, Slider slider)
         {
             _image = image;
+            _slider = slider;
             _transform = _image.GetComponent<RectTransform>();
         }
 
@@ -33,23 +36,25 @@ namespace Samples.Navigation.SceneOverview
             var height = _transform.rect.height;
             await LMotion.Create(height, 0, 0.3f)
                 .WithEase(Ease.OutCirc)
-                .Bind(_transform, static (value, state) =>
-                {
-                    state.anchoredPosition = new Vector2(0, value);
-                })
+                .Bind(_transform, static (value, state) => { state.anchoredPosition = new Vector2(0, value); })
                 .ToUniTask(context.CancellationToken);
+        }
+
+        [Route]
+        private void On(TransitionProgressCommand command)
+        {
+            Debug.Log(command);
+            _slider.value = command.Progress;
         }
 
         [Route]
         private async UniTask On(TransitionEndedCommand command, PublishContext context)
         {
+            await UniTask.Delay(TimeSpan.FromSeconds(5), cancellationToken: context.CancellationToken);
             var height = _transform.rect.height;
             await LMotion.Create(0, height, 0.3f)
                 .WithEase(Ease.OutCirc)
-                .Bind(_transform, static (value, state) =>
-                {
-                    state.anchoredPosition = new Vector2(0, value);
-                })
+                .Bind(_transform, static (value, state) => { state.anchoredPosition = new Vector2(0, value); })
                 .ToUniTask(context.CancellationToken);
         }
     }
